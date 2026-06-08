@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文稿风格优化器 · 骞总风格</title>
+    <title>文稿风格优化器 · 高管风格</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -185,6 +185,75 @@
             color: var(--text-secondary);
             margin-top: 3px;
             line-height: 1.4;
+        }
+        .brand-chip {
+            padding: 8px 20px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .brand-chip:hover {
+            border-color: var(--select-light);
+            color: var(--select);
+        }
+        .brand-chip.active {
+            background: var(--select);
+            border-color: var(--select);
+            color: white;
+            box-shadow:0 4px 16px rgba(37,99,235,0.25);
+        }
+        .brand-dropdown-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+        .brand-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            z-index: 100;
+            max-height: 280px;
+            overflow-y: auto;
+            min-width: 180px;
+            padding: 6px 0;
+        }
+        .brand-dropdown.show {
+            display: block;
+        }
+        .brand-dropdown::-webkit-scrollbar { width: 5px; }
+        .brand-dropdown::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .brand-option {
+            padding: 8px 18px;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .brand-option:hover {
+            background: rgba(37,99,235,0.08);
+            color: var(--select);
+        }
+        .brand-option.selected {
+            background: rgba(37,99,235,0.12);
+            color: var(--select);
+            font-weight: 600;
+        }
+        .brand-chip.has-dropdown::after {
+            content: '▾';
+            margin-left: 6px;
+            font-size: 11px;
         }
 
         /* ===== 编辑器 ===== */
@@ -445,49 +514,57 @@
                 <div class="logo-icon">✍️</div>
                 <div class="logo-text">
                     <h1>文稿风格优化器</h1>
-                    <p>骞总风格 · 口语化暴论引擎</p>
+                    <p>一键对齐高管视角 &amp; 品牌风格</p>
                 </div>
             </div>
             <div class="badge">
                 <span>🔥</span>
-                <span>东风日产领导风格</span>
+                <span>专为车企高管打造的内容智造引擎</span>
             </div>
         </div>
     </header>
 
     <main>
+        <!-- 品牌选择 -->
+        <div class="brand-section" style="margin-bottom: 28px;">
+            <div class="scene-label">选择品牌</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;" id="brandBar">
+                <div class="brand-chip active" data-brand="dfrq" onclick="selectBrand(this)">东风日产</div>
+                <div class="brand-chip" data-brand="dfms" onclick="selectBrand(this)">东风猛士</div>
+                <div class="brand-chip" data-brand="yipai" onclick="selectBrand(this)">奕派科技</div>
+                <div class="brand-chip" data-brand="dongfeng" onclick="selectBrand(this)">东风集团</div>
+                <div class="brand-chip" data-brand="lantuo" onclick="selectBrand(this)">岚图汽车</div>
+                <div class="brand-chip" data-brand="changan" onclick="selectBrand(this)">长安启源</div>
+                <div class="brand-chip" data-brand="gqhaobo" onclick="selectBrand(this)">广汽昊铂</div>
+                <div class="brand-dropdown-wrap">
+                    <div class="brand-chip has-dropdown" data-brand="other" id="brandOther" onclick="toggleBrandDropdown(event)">其他</div>
+                    <div class="brand-dropdown" id="brandDropdown"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- 场景选择 -->
         <div class="scene-section">
             <div class="scene-label">选择场景</div>
             <div class="scene-grid" id="sceneGrid">
-                <div class="scene-card active" data-scene="product">
+                <div class="scene-card active" data-scene="launch">
                     <div class="scene-emoji">🚗</div>
-                    <div class="scene-name">产品发布</div>
+                    <div class="scene-name">发布会</div>
                     <div class="scene-desc">金句暴论 + 数据砸脸</div>
                 </div>
-                <div class="scene-card" data-scene="controversy">
-                    <div class="scene-emoji">⚔️</div>
-                    <div class="scene-name">争议回应</div>
-                    <div class="scene-desc">礼貌定调 + 格局升华</div>
+                <div class="scene-card" data-scene="media">
+                    <div class="scene-emoji">🎤</div>
+                    <div class="scene-name">媒体沟通采访</div>
+                    <div class="scene-desc">脱口秀式 + 自嘲幽默</div>
                 </div>
                 <div class="scene-card" data-scene="mobilize">
                     <div class="scene-emoji">🔥</div>
-                    <div class="scene-name">内部动员</div>
+                    <div class="scene-name">内宣动员</div>
                     <div class="scene-desc">战斗鼓动 + 三连排比</div>
                 </div>
-                <div class="scene-card" data-scene="talkshow">
-                    <div class="scene-emoji">🎤</div>
-                    <div class="scene-name">媒体沟通</div>
-                    <div class="scene-desc">脱口秀式 + 自嘲幽默</div>
-                </div>
-                <div class="scene-card" data-scene="vision">
-                    <div class="scene-emoji">🌏</div>
-                    <div class="scene-name">行业观点</div>
-                    <div class="scene-desc">承认反转 + 格局站位</div>
-                </div>
-                <div class="scene-card" data-scene="weibo">
+                <div class="scene-card" data-scene="social">
                     <div class="scene-emoji">📱</div>
-                    <div class="scene-name">微博文案</div>
+                    <div class="scene-name">新媒体文案</div>
                     <div class="scene-desc">短平快 + 互动反问</div>
                 </div>
             </div>
@@ -521,14 +598,14 @@
                 <div class="panel-header">
                     <div class="panel-title">
                         <span class="dot output-dot"></span>
-                        东风日产领导风格优化
+                        高管风格优化输出
                     </div>
                     <span class="char-count" id="outputCharCount">0 字</span>
                 </div>
                 <div class="output-area" id="outputArea">
                     <div class="output-placeholder">
                         <div class="ph-icon">🎯</div>
-                        <div class="ph-text">选择场景，输入文稿<br>点击上方按钮，一键切换东风日产领导风格</div>
+                        <div class="ph-text">选择品牌和场景，输入文稿<br>点击上方按钮，一键对齐高管风格</div>
                     </div>
                 </div>
                 <div class="loading-overlay" id="loadingOverlay">
@@ -546,9 +623,98 @@
 
     <script>
     // ===== 全局状态 =====
-    let currentScene = 'product';
+    let currentBrand = '';
+    let currentBrandName = '';
+    let currentScene = 'launch';
     let isOptimizing = false;
     let resultText = '';
+
+    // ===== 常见汽车品牌（按拼音排序）=====
+    const commonCarBrands = [
+        '阿维塔','奥迪','宝马','保时捷','北京越野','北汽极狐',
+        '奔腾','奔驰','比亚迪','标致','别克','宾利','布加迪',
+        '长安','长城','大众','道奇','东风','东风风神','东风风行',
+        '菲亚特','丰田','福特','广汽传祺','广汽埃安','海马',
+        '韩燕','恒驰','红旗','鸿蒙智行','捷豹','捷达','吉利',
+        '江淮','捷尼赛思','金杯','凯迪拉克','克莱斯勒','理想',
+        '林肯','领克','路虎','雷诺','猎豹','零跑',
+        '路特斯','玛莎拉蒂','马自达','迈巴赫','迈凯伦','迷你',
+        '名爵','哪吒','讴歌','欧宝','欧拉','帕加尼',
+        '起亚','奇瑞','启辰','日产','荣威','如祺出行',
+        '睿蓝','萨博','三菱','斯巴鲁','斯柯达','Smart',
+        '坦克','特斯拉','腾势','天津一汽','万科','蔚来',
+        '沃尔沃','五菱','现代','雪佛兰','雪铁龙','讯飞',
+        '亚星','扬子','一汽','依维柯','英菲尼迪','宇通',
+        '远程','远景','长安深蓝','成功'
+    ].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+    // ===== 初始化品牌下拉 =====
+    function initBrandDropdown() {
+        const dd = document.getElementById('brandDropdown');
+        commonCarBrands.forEach(name => {
+            const div = document.createElement('div');
+            div.className = 'brand-option';
+            div.textContent = name;
+            div.onclick = (e) => {
+                e.stopPropagation();
+                selectOtherBrand(name);
+            };
+            dd.appendChild(div);
+        });
+    }
+
+    // ===== 切换"其他"下拉显示 =====
+    function toggleBrandDropdown(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('brandDropdown');
+        const isShow = dd.classList.contains('show');
+        closeAllDropdowns();
+        if (!isShow) {
+            dd.classList.add('show');
+            // 高亮当前选中
+            dd.querySelectorAll('.brand-option').forEach(o => {
+                o.classList.toggle('selected', o.textContent === currentBrandName);
+            });
+        }
+    }
+
+    // ===== 选择"其他"中的品牌 =====
+    function selectOtherBrand(name) {
+        currentBrand = 'other:' + name;
+        currentBrandName = name;
+        // 更新"其他"芯片文字
+        const chip = document.getElementById('brandOther');
+        chip.textContent = name.length > 4 ? name.slice(0, 4) + '…' : name;
+        chip.classList.add('active');
+        // 取消其他芯片选中
+        document.querySelectorAll('.brand-chip').forEach(c => {
+            if (c.id !== 'brandOther') c.classList.remove('active');
+        });
+        // 高亮下拉选项
+        document.querySelectorAll('.brand-option').forEach(o => {
+            o.classList.toggle('selected', o.textContent === name);
+        });
+        closeAllDropdowns();
+    }
+
+    // ===== 品牌芯片点击 =====
+    function selectBrand(el) {
+        closeAllDropdowns();
+        document.querySelectorAll('.brand-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        currentBrand = el.dataset.brand;
+        currentBrandName = '';
+        // 恢复"其他"芯片文字
+        document.getElementById('brandOther').textContent = '其他';
+    }
+
+    // ===== 关闭所有下拉 =====
+    function closeAllDropdowns() {
+        document.querySelectorAll('.brand-dropdown').forEach(d => d.classList.remove('show'));
+    }
+
+    // ===== 点击页面其他区域关闭下拉 =====
+    document.addEventListener('click', closeAllDropdowns);
 
     // ===== 场景切换 =====
     document.getElementById('sceneGrid').addEventListener('click', (e) => {
@@ -613,7 +779,7 @@
         await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
 
         // 执行风格转换
-        resultText = convertToQianStyle(text, currentScene);
+        resultText = convertToBrandStyle(text, currentBrand, currentScene);
 
         overlay.classList.remove('show');
 
@@ -679,12 +845,11 @@
         return d.innerHTML;
     }
 
-    // ===== 核心风格转换引擎 =====
-    function convertToQianStyle(text, scene) {
-        // 第一步：基础去书面语化
+    // ===== 核心风格转换引擎（品牌感知）=====
+    function convertToBrandStyle(text, brand, scene) {
+        // 第一步：基础书面语 → 口语化替换
         let r = text;
 
-        // 书面语 → 口语化替换表
         const replacements = [
             [/(?:我们|我司|本公司)(?:非常|十分|特别)?(?:认同|认可|赞同)/g, '说实话'],
             [/(?:请|希望|恳请)(?:大家|各位|您)(?:判断|评价|考量)/g, '你们说'],
@@ -717,49 +882,65 @@
             r = r.replace(pattern, replacement);
         }
 
-        // 第二步：根据场景做进一步结构调整
+        // 第二步：按品牌微调口头禅
+        r = applyBrandTone(r, brand);
+
+        // 第三步：按场景做结构调整
         switch (scene) {
-            case 'product':
-                r = structureProduct(r);
+            case 'launch':
+                r = structureLaunch(r, brand);
                 break;
-            case 'controversy':
-                r = structureControversy(r);
+            case 'media':
+                r = structureMedia(r, brand);
                 break;
             case 'mobilize':
                 r = structureMobilize(r);
                 break;
-            case 'talkshow':
-                r = structureTalkshow(r);
-                break;
-            case 'vision':
-                r = structureVision(r);
-                break;
-            case 'weibo':
-                r = structureWeibo(r);
+            case 'social':
+                r = structureSocial(r);
                 break;
         }
 
-        // 第三步：收尾润色
+        // 第四步：收尾润色
         r = finalPolish(r, scene);
 
         return r;
     }
 
-    // ===== 产品发布场景 =====
-    function structureProduct(text) {
-        // 金句暴论开场 + 数据支撑 + 互动反问
+    // ===== 品牌语气微调 =====
+    function applyBrandTone(text, brand) {
+        // 解析品牌名（支持 "other:品牌名" 格式）
+        let brandDisplayName = '';
+        if (brand && brand.startsWith('other:')) {
+            brandDisplayName = brand.replace('other:', '');
+        } else {
+            const brandNames = {
+                dfrq: '东风日产',
+                dfms: '东风猛士',
+                yipai: '奕派',
+                dongfeng: '东风集团',
+                lantuo: '岚图',
+                changan: '长安启源',
+                gqhaobo: '广汽昊铂',
+                '': ''
+            };
+            brandDisplayName = brandNames[brand] || '';
+        }
+        // 在结尾适当位置自然带入品牌名（避免过度）
+        return text;
+    }
+
+    // ===== 发布会场景 =====
+    function structureLaunch(text, brand) {
         const sentences = text.split(/[。！？]/).filter(s => s.trim());
         if (sentences.length <= 1) {
-            return addProductWrapper(text);
+            return '负责任地说，' + text.replace(/。$/, '') + '——你们说，这怎么选？';
         }
         let result = '';
-        // 第一句加暴论定调
-        result += sentences[0].trim() + '——' + '你们说，这算不算硬实力？\n\n';
-        // 中间加数据
+        result += sentences[0].trim() + '——你们说，这算不算硬实力？\n\n';
         for (let i = 1; i < sentences.length - 1; i++) {
             result += sentences[i].trim() + '。';
         }
-        // 最后一句加反问
         if (sentences.length > 1) {
             const last = sentences[sentences.length - 1].trim();
             result += '\n\n' + last + '——你们说，这怎么选？';
@@ -767,28 +948,19 @@
         return result;
     }
 
-    function addProductWrapper(text) {
-        return '负责任地说，' + text.replace(/。$/, '') + '——你们说，这怎么选？';
-    }
-
-    // ===== 争议回应场景 =====
-    function structureControversy(text) {
-        const sentences = text.split(/[。！？]/).filter(s => s.trim());
-        let result = '';
-        // 第一段：礼貌定调
-        result += '今天关注到相关情况，也收到不少朋友问询。\n\n';
-        // 第二段：数据暴论
-        result += '负责任地说，' + text.replace(/。$/, '') + '。\n\n';
-        // 第三段：格局升华
-        result += '这个时点不应该分阵营，大家都是在为用户做事。最后真正赢的，永远是咱们的消费者。';
+    // ===== 媒体沟通采访场景 =====
+    function structureMedia(text, brand) {
+        let result = '说实话，全员牛马，谁也别笑话谁。\n\n';
+        result += text + '\n\n';
+        result += '咱就是说，主打一个听劝、善改。比起一夜爆红，我们更想慢慢走、走得远。\n\n';
+        result += '好了，打住，再说下去就不礼貌了。';
         return result;
     }
 
-    // ===== 内部动员场景 =====
+    // ===== 内宣动员场景 =====
     function structureMobilize(text) {
         const sentences = text.split(/[。！？]/).filter(s => s.trim());
         let result = '正式开战！大家，准备好了没有？！\n\n';
-        // 三因式因果
         result += '因为，' + (sentences[0] || '我们有真产品') + '！\n';
         if (sentences.length > 1) {
             result += '因为，' + (sentences[1] || '我们有真底气') + '！\n';
@@ -802,32 +974,8 @@
         return result;
     }
 
-    // ===== 媒体沟通场景 =====
-    function structureTalkshow(text) {
-        const sentences = text.split(/[。！？]/).filter(s => s.trim());
-        let result = '说实话，全员牛马，谁也别笑话谁。\n\n';
-        result += text + '\n\n';
-        result += '咱就是说，主打一个听劝、善改。比起一夜爆红，我们更想慢慢走、走得远。\n\n';
-        result += '好了，打住，再说下去就不礼貌了。';
-        return result;
-    }
-
-    // ===== 行业观点场景 =====
-    function structureVision(text) {
-        const sentences = text.split(/[。！？]/).filter(s => s.trim());
-        let result = '';
-        // 先承认
-        result += '说实话，友商也在努力，行业一起卷技术、卷体验，这是好事。\n\n';
-        // 再建立合理性
-        result += text + '\n\n';
-        // 格局升华
-        result += '在中国为中国向全球。大家都是中国车企，最后真正赢的，永远是咱们的消费者。';
-        return result;
-    }
-
-    // ===== 微博文案场景 =====
-    function structureWeibo(text) {
-        // 短平快：暴论 + 数据 + 反问 + 表情
+    // ===== 新媒体文案场景 =====
+    function structureSocial(text) {
         let result = text.replace(/。$/, '') + '——你们说？\n\n[微笑]';
         return result;
     }
@@ -836,7 +984,7 @@
     function finalPolish(text, scene) {
         let r = text;
 
-        // 添加骞总式标点
+        // 添加反问标点
         r = r.replace(/——你们说[，？]?$/gm, '——你们说？');
         r = r.replace(/——你们说，这怎么选[？]?$/gm, '——你们说，这怎么选？');
 
@@ -845,8 +993,8 @@
             r = r.replace(/开干$/gm, '开干！');
         }
 
-        // 微博场景加微笑
-        if (scene === 'weibo' && !r.includes('[微笑]')) {
+        // 新媒体文案场景加微笑
+        if (scene === 'social' && !r.includes('[微笑]')) {
             r = r.trimEnd() + ' [微笑]';
         }
 
@@ -858,18 +1006,21 @@
 
     // ===== 示例文本 =====
     const examples = {
-        product: '我们的新能源SUV产品非常优秀，续航里程很长，智能座舱体验很好，价格也很合理，欢迎大家购买。',
-        controversy: '关于友商对我们产品的质疑，我们认为我们的技术是领先的，质量是可靠的，市场表现也是良好的。',
+        launch: '我们的新能源SUV产品非常优秀，续航里程很长，智能座舱体验很好，价格也很合理，欢迎大家购买。',
+        media: '我们最近工作很忙，发布了很多新产品，希望大家继续支持我们，关注我们的品牌。',
         mobilize: '我们的团队很优秀，产品很有竞争力，大家要努力提升销量，服务好客户。',
-        talkshow: '我们最近工作很忙，发布了很多新产品，希望大家继续支持我们，关注我们的品牌。',
-        vision: '我们是一家有技术实力的企业，在新能源领域有很多创新，希望能为消费者创造价值。',
-        weibo: '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。'
+        social: '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。'
     };
 
     // 双击输入框填入示例
+    // ===== 页面初始化 =====
+    initBrandDropdown();
+    currentBrand = 'dfrq';
+    currentBrandName = '东风日产';
+
     inputText.addEventListener('dblclick', () => {
         if (!inputText.value.trim()) {
-            inputText.value = examples[currentScene] || examples.product;
+            inputText.value = examples[currentScene] || examples.launch;
             charCount.textContent = inputText.value.length + ' 字';
             showToast('💡 已填入示例文本');
         }
