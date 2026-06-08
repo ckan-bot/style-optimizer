@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文稿风格优化器 · 骞总风格</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f8f9fc;
+            --card: #ffffff;
+            --primary: #c41230;
+            --primary-light: #e8354a;
+            --primary-dark: #9a0e26;
+            --accent: #1a1a2e;
+            --text: #2d2d3a;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(196,18,48,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            /* 蓝色选中态 */
+            --select: #2563eb;
+            --select-light: #3b82f6;
+            --select-bg: rgba(37,99,235,0.04);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== 背景装饰 ===== */
+        .bg-decor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decor::before {
+            content: '';
+            position: absolute;
+            top: -20%; right: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(196,18,48,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .bg-decor::after {
+            content: '';
+            position: absolute;
+            bottom: -10%; left: -5%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(26,26,46,0.04) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        /* ===== Header ===== */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 32px 40px 0;
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            color: white;
+            box-shadow: 0 4px 16px rgba(196,18,48,0.25);
+        }
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* ===== Main ===== */
+        main {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 40px 60px;
+        }
+
+        /* ===== 场景选择 ===== */
+        .scene-section {
+            margin-bottom: 28px;
+        }
+        .scene-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .scene-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+        }
+        .scene-card {
+            position: relative;
+            padding: 16px 18px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            user-select: none;
+        }
+        .scene-card:hover {
+            border-color: var(--select-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.1);
+        }
+        .scene-card.active {
+            border-color: var(--select);
+            background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(37,99,235,0.02));
+            box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+        }
+        .scene-card.active::after {
+            content: '✓';
+            position: absolute;
+            top: 8px; right: 10px;
+            width: 20px; height: 20px;
+            background: var(--select);
+            color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .scene-card .scene-emoji {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .scene-card .scene-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .scene-card .scene-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        /* ===== 编辑器 ===== */
+        .editor-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .editor-panel {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .panel-title .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+        .input-dot { background: var(--primary); }
+        .output-dot { background: #10b981; }
+        .char-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 320px;
+            padding: 20px 22px;
+            border: none;
+            outline: none;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text);
+            background: transparent;
+        }
+        textarea::placeholder {
+            color: #c5c8d0;
+        }
+
+        .output-area {
+            min-height: 320px;
+            padding: 20px 22px;
+            font-size: 15px;
+            line-height: 1.9;
+            color: var(--text);
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #c5c8d0;
+            text-align: center;
+        }
+        .output-placeholder .ph-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .output-placeholder .ph-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ===== 按钮 ===== */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 20px 0;
+        }
+        .btn-optimize {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 6px 24px rgba(196,18,48,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-optimize::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .btn-optimize:hover::before { opacity: 1; }
+        .btn-optimize:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(196,18,48,0.4);
+        }
+        .btn-optimize:active {
+            transform: translateY(0);
+        }
+        .btn-optimize:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-optimize .btn-arrow {
+            transition: transform 0.3s;
+        }
+        .btn-optimize:hover .btn-arrow {
+            transform: translateX(3px);
+        }
+
+        .btn-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: var(--card);
+            color: var(--text);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .btn-copy:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* ===== 加载动画 ===== */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .spinner {
+            display: flex;
+            gap: 6px;
+        }
+        .spinner span {
+            width: 10px; height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+        .spinner span:nth-child(2) { animation-delay: 0.15s; }
+        .spinner span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== 结果高亮 ===== */
+        .hl-phrase {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .hl-data {
+            background: rgba(196,18,48,0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--accent);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== 打字动画 ===== */
+        .typing-cursor::after {
+            content: '|';
+            color: var(--primary);
+            font-weight: 300;
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            header, main { padding-left: 20px; padding-right: 20px; }
+            .header-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .scene-grid { grid-template-columns: 1fr 1fr; }
+            .btn-optimize { padding: 14px 32px; font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decor"></div>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo-group">
+                <div class="logo-icon">✍️</div>
+                <div class="logo-text">
+                    <h1>文稿风格优化器</h1>
+                    <p>骞总风格 · 口语化暴论引擎</p>
+                </div>
+            </div>
+            <div class="badge">
+                <span>🔥</span>
+                <span>东风日产领导风格</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 场景选择 -->
+        <div class="scene-section">
+            <div class="scene-label">选择场景</div>
+            <div class="scene-grid" id="sceneGrid">
+                <div class="scene-card active" data-scene="product">
+                    <div class="scene-emoji">🚗</div>
+                    <div class="scene-name">产品发布</div>
+                    <div class="scene-desc">金句暴论 + 数据砸脸</div>
+                </div>
+                <div class="scene-card" data-scene="controversy">
+                    <div class="scene-emoji">⚔️</div>
+                    <div class="scene-name">争议回应</div>
+                    <div class="scene-desc">礼貌定调 + 格局升华</div>
+                </div>
+                <div class="scene-card" data-scene="mobilize">
+                    <div class="scene-emoji">🔥</div>
+                    <div class="scene-name">内部动员</div>
+                    <div class="scene-desc">战斗鼓动 + 三连排比</div>
+                </div>
+                <div class="scene-card" data-scene="talkshow">
+                    <div class="scene-emoji">🎤</div>
+                    <div class="scene-name">媒体沟通</div>
+                    <div class="scene-desc">脱口秀式 + 自嘲幽默</div>
+                </div>
+                <div class="scene-card" data-scene="vision">
+                    <div class="scene-emoji">🌏</div>
+                    <div class="scene-name">行业观点</div>
+                    <div class="scene-desc">承认反转 + 格局站位</div>
+                </div>
+                <div class="scene-card" data-scene="weibo">
+                    <div class="scene-emoji">📱</div>
+                    <div class="scene-name">微博文案</div>
+                    <div class="scene-desc">短平快 + 互动反问</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑器（上下布局） -->
+        <div class="editor-stack">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="dot input-dot"></span>
+                        原始文稿
+                    </div>
+                    <span class="char-count" id="charCount">0 字</span>
+                </div>
+                <textarea id="inputText" placeholder="在这里粘贴需要优化的文稿……&#10;&#10;例如：我们的产品非常优秀，续航里程很长，智能座舱体验很好，欢迎大家购买。"></textarea>
+            </div>
+
+            <!-- 操作按钮（在输入框和结果框之间） -->
+            <div class="action-bar">
+                <button class="btn-optimize" id="btnOptimize" onclick="handleOptimize()">
+                    开始优化
+                    <span class="btn-arrow">→</span>
+                </button>
+                <button class="btn-copy" id="btnCopy" onclick="handleCopy()" style="display:none;">
+                    📋 复制结果
+                </button>
+            </div>
+
+            <div class="editor-panel" style="position:relative;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="dot output-dot"></span>
+                        东风日产领导风格优化
+                    </div>
+                    <span class="char-count" id="outputCharCount">0 字</span>
+                </div>
+                <div class="output-area" id="outputArea">
+                    <div class="output-placeholder">
+                        <div class="ph-icon">🎯</div>
+                        <div class="ph-text">选择场景，输入文稿<br>点击上方按钮，一键切换东风日产领导风格</div>
+                    </div>
+                </div>
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="spinner">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ===== 全局状态 =====
+    let currentScene = 'product';
+    let isOptimizing = false;
+    let resultText = '';
+
+    // ===== 场景切换 =====
+    document.getElementById('sceneGrid').addEventListener('click', (e) => {
+        const card = e.target.closest('.scene-card');
+        if (!card) return;
+        document.querySelectorAll('.scene-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        currentScene = card.dataset.scene;
+    });
+
+    // ===== 字数统计 =====
+    const inputText = document.getElementById('inputText');
+    const charCount = document.getElementById('charCount');
+
+    inputText.addEventListener('input', () => {
+        charCount.textContent = inputText.value.length + ' 字';
+    });
+
+    // ===== Toast =====
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // ===== 复制 =====
+    function handleCopy() {
+        if (!resultText) return;
+        navigator.clipboard.writeText(resultText).then(() => {
+            showToast('✅ 已复制到剪贴板');
+        }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = resultText;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('✅ 已复制到剪贴板');
+        });
+    }
+
+    // ===== 优化主逻辑 =====
+    async function handleOptimize() {
+        const text = inputText.value.trim();
+        if (!text) {
+            showToast('请先输入需要优化的文稿');
+            return;
+        }
+        if (isOptimizing) return;
+        isOptimizing = true;
+
+        const btn = document.getElementById('btnOptimize');
+        btn.disabled = true;
+        btn.innerHTML = '优化中 <span class="btn-arrow" style="animation: bounce 0.6s infinite;">⚡</span>';
+
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.add('show');
+
+        // 模拟 AI 思考延迟
+        await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
+
+        // 执行风格转换
+        resultText = convertToQianStyle(text, currentScene);
+
+        overlay.classList.remove('show');
+
+        // 打字机效果输出
+        await typewriterOutput(resultText);
+
+        btn.disabled = false;
+        btn.innerHTML = '开始优化 <span class="btn-arrow">→</span>';
+        isOptimizing = false;
+
+        document.getElementById('btnCopy').style.display = 'inline-flex';
+        document.getElementById('outputCharCount').textContent = resultText.length + ' 字';
+    }
+
+    // ===== 打字机输出 =====
+    async function typewriterOutput(text) {
+        const area = document.getElementById('outputArea');
+        area.innerHTML = '';
+        area.classList.add('typing-cursor');
+
+        const chars = [...text];
+        let displayed = '';
+        const chunkSize = 3;
+
+        for (let i = 0; i < chars.length; i += chunkSize) {
+            const chunk = chars.slice(i, i + chunkSize).join('');
+            displayed += chunk;
+            area.textContent = displayed;
+            area.scrollTop = area.scrollHeight;
+            await new Promise(r => setTimeout(r, 18));
+        }
+
+        area.classList.remove('typing-cursor');
+
+        // 最终渲染带高亮的版本
+        area.innerHTML = highlightResult(resultText);
+    }
+
+    // ===== 结果高亮 =====
+    function highlightResult(text) {
+        // 高亮骞总标志性口头禅
+        const phrases = [
+            '说实话', '负责任地说', '你们说', '咱就是说',
+            '不能说[^，]+，只能说', '在中国为中国向全球',
+            '最后真正赢的', '咱们的消费者'
+        ];
+        let html = escapeHtml(text);
+
+        // 高亮数据（数字+单位）
+        html = html.replace(/(\d+[\.\d]*)([%万台亿公里月年个辆元]+)/g,
+            '<span class="hl-data">$1$2</span>');
+
+        // 高亮核心口头禅
+        html = html.replace(/(说实话|负责任地说|你们说|咱就是说|在中国为中国向全球|咱们的消费者)/g,
+            '<span class="hl-phrase">$1</span>');
+
+        return html;
+    }
+
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    // ===== 核心风格转换引擎 =====
+    function convertToQianStyle(text, scene) {
+        // 第一步：基础去书面语化
+        let r = text;
+
+        // 书面语 → 口语化替换表
+        const replacements = [
+            [/(?:我们|我司|本公司)(?:非常|十分|特别)?(?:认同|认可|赞同)/g, '说实话'],
+            [/(?:请|希望|恳请)(?:大家|各位|您)(?:判断|评价|考量)/g, '你们说'],
+            [/(?:不仅|不单)[^，。]+而且[^，。]+(?:雷同|相似|一致|相同)/g, '不能说相似，只能说一模一样'],
+            [/(?:我们|本公司)(?:受益匪浅|获益良多|深受其益)/g, '我们也是受益者'],
+            [/(?:欢迎|期待)(?:大家|各位)(?:交流|沟通|探讨)/g, '拉个群好好交流交流'],
+            [/(?:我(?:非常|十分)?(?:高兴|荣幸|开心)(?:地)?(?:宣布|告诉|分享))/g, '说实话'],
+            [/(?:我(?:们)?(?:认为|觉得|以为)(?:品质|质量)(?:非常|十分)?(?:重要|关键|核心))/g, '三电终身质保，敢写进合同才算数'],
+            [/(?:感谢(?:大家|各位|您)(?:的)?(?:关注|支持|关心))/g, '今天关注到相关情况，收到很多朋友问询'],
+            [/(?:与竞品相比(?:各有|均具)(?:优势|亮点))/g, '1.5T对1.5L，高速上踩一脚就知道'],
+            [/(?:我们(?:希望|致力于|专注于)(?:为消费者|给用户)(?:创造|提供)(?:价值|更好))/g, '在中国为中国向全球，最后真正赢的，永远是咱们的消费者'],
+            [/(?:请(?:各位|大家)(?:媒体|老师)(?:多)?(?:支持|关注|指教))/g, '你们说，这要是A股该多好啊'],
+            [/(?:产品(?:非常|十分)?(?:优秀|出色|卓越))/g, '全网搜，只此一台'],
+            [/(?:续航(?:里程)?(?:很长|很远|出色))/g, '续航直接拉满，310公里纯电——你们算算，够不够来回'],
+            [/(?:智能(?:座舱|化)?(?:体验|表现)(?:很好|出色|优秀))/g, '智能化领先一个代际'],
+            [/(?:(?:欢?迎|期待)(?:大家|各位)?(?:购买|选购|体验))/g, '你们说，这怎么选？'],
+            [/(?:(?:价格|售价)(?:合理|实惠|优惠|亲民))/g, '价格？16.99万，你们算算这笔账'],
+            [/(?:性能(?:表现)?(?:出色|优秀|强劲))/g, '动力更强、跑得更远，高速上踩一脚就知道'],
+            [/(?:(?:品质|质量)(?:可靠|过硬|有保障))/g, '真技术、真品质、真诚意，才是硬通货'],
+            [/(?:技术(?:领先|先进|创新))/g, '领先一个代际，也领先友商12-18个月'],
+            [/(?:团队(?:优秀|强大|出色|有能力))/g, '敢拼敢冲、不服输的团队'],
+            [/(?:销量(?:很好|增长|提升|突破))/g, '订单直接飙上来了'],
+            [/(?:市场(?:表现|份额)(?:良好|领先|优秀))/g, '市场不等人，订单说明一切'],
+            [/(?:(?:诚邀|邀请|欢迎)(?:莅临|参加|参与)(?:体验|试驾))/g, '别光听我说，开一圈就知道'],
+            [/(?:服务(?:周到|贴心|完善|优质))/g, '用服务赢订单，用实干赢信任'],
+            [/(?:我们(?:将)?(?:继续|持续)(?:努力|奋进|前行))/g, '不玩虚的，不负用户'],
+        ];
+
+        for (const [pattern, replacement] of replacements) {
+            r = r.replace(pattern, replacement);
+        }
+
+        // 第二步：根据场景做进一步结构调整
+        switch (scene) {
+            case 'product':
+                r = structureProduct(r);
+                break;
+            case 'controversy':
+                r = structureControversy(r);
+                break;
+            case 'mobilize':
+                r = structureMobilize(r);
+                break;
+            case 'talkshow':
+                r = structureTalkshow(r);
+                break;
+            case 'vision':
+                r = structureVision(r);
+                break;
+            case 'weibo':
+                r = structureWeibo(r);
+                break;
+        }
+
+        // 第三步：收尾润色
+        r = finalPolish(r, scene);
+
+        return r;
+    }
+
+    // ===== 产品发布场景 =====
+    function structureProduct(text) {
+        // 金句暴论开场 + 数据支撑 + 互动反问
+        const sentences = text.split(/[。！？]/).filter(s => s.trim());
+        if (sentences.length <= 1) {
+            return addProductWrapper(text);
+        }
+        let result = '';
+        // 第一句加暴论定调
+        result += sentences[0].trim() + '——' + '你们说，这算不算硬实力？\n\n';
+        // 中间加数据
+        for (let i = 1; i < sentences.length - 1; i++) {
+            result += sentences[i].trim() + '。';
+        }
+        // 最后一句加反问
+        if (sentences.length > 1) {
+            const last = sentences[sentences.length - 1].trim();
+            result += '\n\n' + last + '——你们说，这怎么选？';
+        }
+        return result;
+    }
+
+    function addProductWrapper(text) {
+        return '负责任地说，' + text.replace(/。$/, '') + '——你们说，这怎么选？';
+    }
+
+    // ===== 争议回应场景 =====
+    function structureControversy(text) {
+        const sentences = text.split(/[。！？]/).filter(s => s.trim());
+        let result = '';
+        // 第一段：礼貌定调
+        result += '今天关注到相关情况，也收到不少朋友问询。\n\n';
+        // 第二段：数据暴论
+        result += '负责任地说，' + text.replace(/。$/, '') + '。\n\n';
+        // 第三段：格局升华
+        result += '这个时点不应该分阵营，大家都是在为用户做事。最后真正赢的，永远是咱们的消费者。';
+        return result;
+    }
+
+    // ===== 内部动员场景 =====
+    function structureMobilize(text) {
+        const sentences = text.split(/[。！？]/).filter(s => s.trim());
+        let result = '正式开战！大家，准备好了没有？！\n\n';
+        // 三因式因果
+        result += '因为，' + (sentences[0] || '我们有真产品') + '！\n';
+        if (sentences.length > 1) {
+            result += '因为，' + (sentences[1] || '我们有真底气') + '！\n';
+        }
+        if (sentences.length > 2) {
+            result += '因为，' + (sentences[2] || '我们有敢拼的团队') + '！\n';
+        }
+        result += '\n';
+        result += '不摆架子、不喊口号，用实干赢信任，用服务赢订单！\n\n';
+        result += '现在！立刻！开干！';
+        return result;
+    }
+
+    // ===== 媒体沟通场景 =====
+    function structureTalkshow(text) {
+        const sentences = text.split(/[。！？]/).filter(s => s.trim());
+        let result = '说实话，全员牛马，谁也别笑话谁。\n\n';
+        result += text + '\n\n';
+        result += '咱就是说，主打一个听劝、善改。比起一夜爆红，我们更想慢慢走、走得远。\n\n';
+        result += '好了，打住，再说下去就不礼貌了。';
+        return result;
+    }
+
+    // ===== 行业观点场景 =====
+    function structureVision(text) {
+        const sentences = text.split(/[。！？]/).filter(s => s.trim());
+        let result = '';
+        // 先承认
+        result += '说实话，友商也在努力，行业一起卷技术、卷体验，这是好事。\n\n';
+        // 再建立合理性
+        result += text + '\n\n';
+        // 格局升华
+        result += '在中国为中国向全球。大家都是中国车企，最后真正赢的，永远是咱们的消费者。';
+        return result;
+    }
+
+    // ===== 微博文案场景 =====
+    function structureWeibo(text) {
+        // 短平快：暴论 + 数据 + 反问 + 表情
+        let result = text.replace(/。$/, '') + '——你们说？\n\n[微笑]';
+        return result;
+    }
+
+    // ===== 收尾润色 =====
+    function finalPolish(text, scene) {
+        let r = text;
+
+        // 添加骞总式标点
+        r = r.replace(/——你们说[，？]?$/gm, '——你们说？');
+        r = r.replace(/——你们说，这怎么选[？]?$/gm, '——你们说，这怎么选？');
+
+        // 确保感叹号在动员场景充足
+        if (scene === 'mobilize') {
+            r = r.replace(/开干$/gm, '开干！');
+        }
+
+        // 微博场景加微笑
+        if (scene === 'weibo' && !r.includes('[微笑]')) {
+            r = r.trimEnd() + ' [微笑]';
+        }
+
+        // 清理多余空白
+        r = r.replace(/\n{3,}/g, '\n\n').trim();
+
+        return r;
+    }
+
+    // ===== 示例文本 =====
+    const examples = {
+        product: '我们的新能源SUV产品非常优秀，续航里程很长，智能座舱体验很好，价格也很合理，欢迎大家购买。',
+        controversy: '关于友商对我们产品的质疑，我们认为我们的技术是领先的，质量是可靠的，市场表现也是良好的。',
+        mobilize: '我们的团队很优秀，产品很有竞争力，大家要努力提升销量，服务好客户。',
+        talkshow: '我们最近工作很忙，发布了很多新产品，希望大家继续支持我们，关注我们的品牌。',
+        vision: '我们是一家有技术实力的企业，在新能源领域有很多创新，希望能为消费者创造价值。',
+        weibo: '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。'
+    };
+
+    // 双击输入框填入示例
+    inputText.addEventListener('dblclick', () => {
+        if (!inputText.value.trim()) {
+            inputText.value = examples[currentScene] || examples.product;
+            charCount.textContent = inputText.value.length + ' 字';
+            showToast('💡 已填入示例文本');
+        }
+    });
+    </script>
+</body>
+</html>
