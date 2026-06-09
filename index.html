@@ -673,13 +673,79 @@
 
     <script>
     // ===== 全局状态 =====
-    let currentBrand = '';
-    let currentBrandName = '';
-    let currentScene = 'macro';   // 人设 key
+    let currentBrand = 'dfrq';
+    let currentBrandName = '东风日产';
+    let currentScene = 'macro';
     let isOptimizing = false;
     let resultText = '';
+    let optimizationCount = 0;   // 追踪对同一段文本的重复优化次数
+    let lastInputHash = '';       // 追踪输入是否变化
 
-    // ===== 常见汽车品牌（按拼音排序）=====
+    // ====================================================================
+    //  东风日产品牌 DNA —— 仅在 brand==='dfrq' 时启用
+    // ====================================================================
+    const dfrqDNA = {
+        // 品牌专属词汇替换（通用书面语 → 东风日产风格词）
+        vocab: [
+            [/产品很有竞争力/g, '合资新势力，行业新实力'],
+            [/技术领先/g, '技术日产，人·车·生活'],
+            [/续航表现优秀/g, '续航安心，远行无忧'],
+            [/智能化体验领先/g, '智能舒适，就选东风日产'],
+            [/品质有保障/g, '大厂品质，安心靠谱'],
+            [/性能表现强劲/g, '天演架构赋能，性能越级'],
+            [/销量持续提升/g, '1700万用户信赖，口碑是最好的销量'],
+            [/服务完善/g, '以"山姆式体验"打磨每一次服务'],
+            [/我们会持续努力/g, '尽兴由NI，不负期待'],
+            [/欢迎大家体验/g, '欢迎大家来试驾，NI好！'],
+            [/我们认为/g, '东风日产始终认为'],
+        ],
+        // 人设专属品牌金句库（按 persona 分组）
+        personaPhrases: {
+            macro: [
+                '在中国，为中国，向全球',
+                '合资新势力，行业新实力',
+                '让"在中国，为世界"不再是一句口号，而是每一步践行的承诺',
+            ],
+            tech: [
+                '安全不是概率题，而是必答题',
+                '最硬的车身结构，守护的是大家心中最柔软的家人',
+                '智能化不分势力，只看实力',
+                '大厂品质，安心靠谱',
+            ],
+            bold: [
+                '有人讨论，说明你走得快；有人模仿，说明你做得对',
+                '难，就是可以。干，才有答案',
+                '不玩虚的，不负用户，才是车企该有的姿态',
+                '毕竟，我们"神马"都不怕！',
+            ],
+            warm: [
+                '每一台车，都承载着万千家庭对幸福生活的向往',
+                '用户的期待和信任，给了我们巨大的信心',
+                '只要真心对客户好，不管什么系，都有戏',
+            ],
+            meme: [
+                '沙发厂，现在也是科技灯厂！',
+                '发布会的重点在"发布"，而不是"会"！',
+                '能够超越东风日产大沙发的，只有AI赋能后的东风日产大沙发',
+            ],
+            steady: [
+                '携手共铸新时代的合作典范',
+                '共同谱写人·车·幸福生活的崭新篇章',
+                '东风将与日产继续携手，不负信赖',
+            ],
+        },
+        // 产品标准话术（在合适位置自动嵌入）
+        products: [
+            { keywords: ['N7', '纯电', '家轿'], line: 'N7——14万级最家纯电轿车，AI零压云毯座椅、全域智能防晕车、四针刺电池' },
+            { keywords: ['N6', '插混', '省油'], line: 'N6——9万级高颜值超舒适插混，2.79L亏电油耗，"返乡神车"' },
+            { keywords: ['NX8', 'SUV', '大空间'], line: 'NX8——20万级大大大五座智慧舒享SUV，大品牌、大空间、大智慧' },
+            { keywords: ['天籁', '鸿蒙', '燃油'], line: '天籁·鸿蒙座舱——全球首个鸿蒙座舱燃油车，双终身质保' },
+        ],
+    };
+
+    // ====================================================================
+    //  常见汽车品牌（按拼音排序）
+    // ====================================================================
     const commonCarBrands = [
         '阿维塔','奥迪','宝马','保时捷','北京越野','北汽极狐',
         '奔腾','奔驰','比亚迪','标致','别克','宾利','布加迪',
@@ -698,22 +764,20 @@
         '远程','远景','长安深蓝','成功'
     ].sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
-    // ===== 初始化品牌下拉 =====
+    // ====================================================================
+    //  UI 交互逻辑（品牌 / 人设 / 下拉）
+    // ====================================================================
     function initBrandDropdown() {
         const dd = document.getElementById('brandDropdown');
         commonCarBrands.forEach(name => {
             const div = document.createElement('div');
             div.className = 'brand-option';
             div.textContent = name;
-            div.onclick = (e) => {
-                e.stopPropagation();
-                selectOtherBrand(name);
-            };
+            div.onclick = (e) => { e.stopPropagation(); selectOtherBrand(name); };
             dd.appendChild(div);
         });
     }
 
-    // ===== 切换"其他"下拉显示 =====
     function toggleBrandDropdown(e) {
         e.stopPropagation();
         const dd = document.getElementById('brandDropdown');
@@ -721,52 +785,42 @@
         closeAllDropdowns();
         if (!isShow) {
             dd.classList.add('show');
-            // 高亮当前选中
             dd.querySelectorAll('.brand-option').forEach(o => {
                 o.classList.toggle('selected', o.textContent === currentBrandName);
             });
         }
     }
 
-    // ===== 选择"其他"中的品牌 =====
     function selectOtherBrand(name) {
         currentBrand = 'other:' + name;
         currentBrandName = name;
-        // 更新"其他"芯片文字
         const chip = document.getElementById('brandOther');
         chip.textContent = name.length > 4 ? name.slice(0, 4) + '…' : name;
         chip.classList.add('active');
-        // 取消其他芯片选中
         document.querySelectorAll('.brand-chip').forEach(c => {
             if (c.id !== 'brandOther') c.classList.remove('active');
         });
-        // 高亮下拉选项
         document.querySelectorAll('.brand-option').forEach(o => {
             o.classList.toggle('selected', o.textContent === name);
         });
         closeAllDropdowns();
     }
 
-    // ===== 品牌芯片点击 =====
     function selectBrand(el) {
         closeAllDropdowns();
         document.querySelectorAll('.brand-chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
         currentBrand = el.dataset.brand;
-        currentBrandName = '';
-        // 恢复"其他"芯片文字
+        currentBrandName = el.textContent === '其他' ? '' : el.textContent;
         document.getElementById('brandOther').textContent = '其他';
     }
 
-    // ===== 关闭所有下拉 =====
     function closeAllDropdowns() {
         document.querySelectorAll('.brand-dropdown').forEach(d => d.classList.remove('show'));
     }
-
-    // ===== 点击页面其他区域关闭下拉 =====
     document.addEventListener('click', closeAllDropdowns);
 
-    // ===== 场景切换 =====
+    // 人设切换
     document.getElementById('sceneGrid').addEventListener('click', (e) => {
         const card = e.target.closest('.scene-card');
         if (!card) return;
@@ -775,15 +829,14 @@
         currentScene = card.dataset.scene;
     });
 
-    // ===== 字数统计 =====
+    // 字数统计
     const inputText = document.getElementById('inputText');
     const charCount = document.getElementById('charCount');
-
     inputText.addEventListener('input', () => {
         charCount.textContent = inputText.value.length + ' 字';
     });
 
-    // ===== Toast =====
+    // Toast
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.textContent = msg;
@@ -791,13 +844,12 @@
         setTimeout(() => t.classList.remove('show'), 2000);
     }
 
-    // ===== 复制 =====
+    // 复制
     function handleCopy() {
         if (!resultText) return;
         navigator.clipboard.writeText(resultText).then(() => {
             showToast('✅ 已复制到剪贴板');
         }).catch(() => {
-            // fallback
             const ta = document.createElement('textarea');
             ta.value = resultText;
             document.body.appendChild(ta);
@@ -808,15 +860,23 @@
         });
     }
 
-    // ===== 优化主逻辑 =====
+    // ====================================================================
+    //  优化主逻辑
+    // ====================================================================
     async function handleOptimize() {
         const text = inputText.value.trim();
-        if (!text) {
-            showToast('请先输入需要优化的文稿');
-            return;
-        }
+        if (!text) { showToast('请先输入需要优化的文稿'); return; }
         if (isOptimizing) return;
         isOptimizing = true;
+
+        // 判断是否是对同一段文本的重新优化
+        const hash = simpleHash(text + currentBrand + currentScene);
+        if (hash === lastInputHash) {
+            optimizationCount++;
+        } else {
+            optimizationCount = 0;
+            lastInputHash = hash;
+        }
 
         const btn = document.getElementById('btnOptimize');
         btn.disabled = true;
@@ -826,10 +886,10 @@
         overlay.classList.add('show');
 
         // 模拟 AI 思考延迟
-        await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
+        await new Promise(r => setTimeout(r, 1000 + Math.random() * 800));
 
         // 执行风格转换
-        resultText = convertToBrandStyle(text, currentBrand, currentScene);
+        resultText = convertToBrandStyle(text, currentBrand, currentScene, optimizationCount);
 
         overlay.classList.remove('show');
 
@@ -837,46 +897,56 @@
         await typewriterOutput(resultText);
 
         btn.disabled = false;
-        btn.innerHTML = '开始优化 <span class="btn-arrow">→</span>';
+        btn.innerHTML = optimizationCount > 0
+            ? '重新优化 <span class="btn-arrow">→</span>'
+            : '开始优化 <span class="btn-arrow">→</span>';
         isOptimizing = false;
 
         document.getElementById('btnCopy').style.display = 'inline-flex';
         document.getElementById('outputCharCount').textContent = resultText.length + ' 字';
     }
 
-    // ===== 打字机输出 =====
+    function simpleHash(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+        return h;
+    }
+
+    // ====================================================================
+    //  打字机输出
+    // ====================================================================
     async function typewriterOutput(text) {
         const area = document.getElementById('outputArea');
         area.innerHTML = '';
         area.classList.add('typing-cursor');
-
         const chars = [...text];
         let displayed = '';
         const chunkSize = 3;
-
         for (let i = 0; i < chars.length; i += chunkSize) {
-            const chunk = chars.slice(i, i + chunkSize).join('');
-            displayed += chunk;
+            displayed += chars.slice(i, i + chunkSize).join('');
             area.textContent = displayed;
             area.scrollTop = area.scrollHeight;
             await new Promise(r => setTimeout(r, 18));
         }
-
         area.classList.remove('typing-cursor');
-
-        // 最终渲染带高亮的版本
         area.innerHTML = highlightResult(resultText);
     }
 
-    // ===== 结果高亮 =====
+    // ====================================================================
+    //  结果高亮
+    // ====================================================================
     function highlightResult(text) {
         let html = escapeHtml(text);
-        // 高亮数据（数字+单位）
-        html = html.replace(/(\d+[\.\d]*)([%万台亿公里月年个辆元]+)/g,
+        html = html.replace(/(\d+[\.\d]*)([%万台亿公里月年个辆元度牛]+|N·m|kW|Wh|kg|mm|V)/g,
             '<span class="hl-data">$1$2</span>');
-        // 高亮各人设标志性口头禅
-        html = html.replace(/(说实话|负责任地说|你们说|咱就是说|在中国为中国向全球|咱们的消费者|从行业发展来看|用数据说话|感谢大家|不负期待|好家伙)/g,
-            '<span class="hl-phrase">$1</span>');
+        const phrases = [
+            '说实话','负责任地说','你们说','用数据说话','感谢大家','不负期待',
+            '好家伙','在中国为中国向全球','尽兴由NI','合资新势力','技术日产',
+            'NI好','人·车·生活','最家','安心靠谱','必须配','绝配',
+            '神马都不怕','山姆式','沙发厂','科技灯厂','行业新实力',
+        ];
+        const re = new RegExp('(' + phrases.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
+        html = html.replace(re, '<span class="hl-phrase">$1</span>');
         return html;
     }
 
@@ -886,12 +956,47 @@
         return d.innerHTML;
     }
 
-    // ===== 核心风格转换引擎（品牌 × 人设）=====
-    function convertToBrandStyle(text, brand, persona) {
+    // ====================================================================
+    //  核心风格转换引擎
+    //  规则：
+    //    1. 东风日产 → 先叠加品牌 DNA，再按人设微调
+    //    2. 其他品牌 → 仅按人设转换
+    //    3. 最后校对润色（错别字/语病/衔接）
+    // ====================================================================
+    function convertToBrandStyle(text, brand, persona, variation) {
         let r = text;
+        const isDfrq = (brand === 'dfrq');
+        const v = variation || 0;   // 变体序号，用于重新优化
 
-        // 第一步：通用书面语 → 口语化预处理
-        const replacements = [
+        // ---- 第一步：通用书面语 → 半口语化预处理 ----
+        r = preProcess(r);
+
+        // ---- 第二步：如果是东风日产，叠加品牌 DNA ----
+        if (isDfrq) {
+            r = applyDfrqBrandDNA(r, persona);
+        }
+
+        // ---- 第三步：按人设深度风格塑造 ----
+        switch (persona) {
+            case 'macro':  r = personaMacro(r, isDfrq, v);  break;
+            case 'tech':   r = personaTech(r, isDfrq, v);   break;
+            case 'bold':   r = personaBold(r, isDfrq, v);   break;
+            case 'warm':   r = personaWarm(r, isDfrq, v);   break;
+            case 'meme':   r = personaMeme(r, isDfrq, v);   break;
+            case 'steady': r = personaSteady(r, isDfrq, v); break;
+        }
+
+        // ---- 第四步：校对润色 ----
+        r = polishText(r);
+
+        return r;
+    }
+
+    // ====================================================================
+    //  第一步：通用预处理（书面语 → 口语化）
+    // ====================================================================
+    function preProcess(text) {
+        const reps = [
             [/(?:我们|我司|本公司)(?:非常|十分|特别)?(?:认同|认可|赞同)/g, '我们认为'],
             [/(?:请|希望|恳请)(?:大家|各位|您)(?:判断|评价|考量)/g, '大家可以判断'],
             [/(?:我们|本公司)(?:受益匪浅|获益良多|深受其益)/g, '我们也是受益者'],
@@ -908,116 +1013,317 @@
             [/(?:服务(?:周到|贴心|完善|优质))/g, '服务完善'],
             [/(?:我们(?:将)?(?:继续|持续)(?:努力|奋进|前行))/g, '我们会持续努力'],
         ];
-        for (const [p, rep] of replacements) r = r.replace(p, rep);
-
-        // 第二步：按人设做深度风格塑造
-        switch (persona) {
-            case 'macro':   r = personaMacro(r); break;
-            case 'tech':    r = personaTech(r); break;
-            case 'bold':    r = personaBold(r); break;
-            case 'warm':    r = personaWarm(r); break;
-            case 'meme':    r = personaMeme(r); break;
-            case 'steady':  r = personaSteady(r); break;
-        }
-
-        // 第三步：收尾清理
-        r = r.replace(/\n{3,}/g, '\n\n').trim();
+        let r = text;
+        for (const [p, rep] of reps) r = r.replace(p, rep);
         return r;
     }
 
+    // ====================================================================
+    //  第二步：东风日产品牌 DNA 叠加
+    // ====================================================================
+    function applyDfrqBrandDNA(text, persona) {
+        let r = text;
+        // 应用品牌专属词汇替换
+        for (const [pat, rep] of dfrqDNA.vocab) {
+            r = r.replace(pat, rep);
+        }
+        return r;
+    }
+
+    // ====================================================================
+    //  第三步：六大人设转换引擎
+    // ====================================================================
+
+    // ---- 工具函数：将文本按句号/问号/感叹号拆分 ----
+    function splitSentences(text) {
+        return text.split(/([。！？])/).reduce((acc, cur, i, arr) => {
+            if (i % 2 === 0 && cur.trim()) acc.push(cur.trim());
+            return acc;
+        }, []);
+    }
+
+    // ---- 工具函数：从数组中按变体选择 ----
+    function pickVariant(arr, v) {
+        return arr[v % arr.length];
+    }
+
     // ===== 格局领航型 =====
-    // 站位高、谈行业、讲趋势，偏宏观叙事
-    function personaMacro(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '从行业发展来看，' + (s[0] || text).trim() + '。\n\n';
-        r += '这不只是一款产品的问题，是整个赛道进化方向的缩影。新能源、智能化、用户体验，三条线同步演进，谁能把握住趋势，谁就站在时代的前排。\n\n';
-        if (s.length > 1) r += s.slice(1).join('。').trim() + '。\n\n';
-        r += '我们做的每一个决策，最终落脚点都是：对行业有没有价值，对用户有没有意义。';
+    // 核心：宏观叙事 + 行业视角收尾
+    // 标签：站位高、谈行业、讲趋势
+    function personaMacro(text, isDfrq, v) {
+        const s = splitSentences(text);
+        const brandPrefix = isDfrq ? '东风日产' : '';
+
+        const openings = [
+            () => '从行业发展来看，' + (s[0] || text).trim() + '。\n\n这不只是一款产品的事，是整个赛道进化方向的缩影。新能源、智能化、用户体验，三条线同步演进，谁能把握住趋势，谁就站在时代的前排。',
+            () => '站在更高的维度看，' + (s[0] || text).trim() + '——这背后的行业趋势不可忽视。\n\n整个行业正在经历深刻变革，从"有没有"到"好不好"，用户的选择标准已经彻底变了。',
+            () => '回望过去十年，行业格局几经洗牌。' + (s[0] || text).trim() + '——这恰恰印证了我们一直以来的判断。\n\n站在今天这个时间节点，趋势已经非常清晰：',
+        ];
+
+        const middles = [
+            () => (s.length > 1 ? s.slice(1).join('。').trim() + '。' : ''),
+            () => (s.length > 1 ? s.slice(1).map(x => x.trim()).join('；') + '。' : ''),
+            () => (s.length > 1 ? '具体而言——' + s.slice(1).join('，').trim() + '。' : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n我们做的每一个决策，最终落脚点都是：对行业有没有价值，对用户有没有意义。' + pickVariant(dfrqDNA.personaPhrases.macro, v),
+            () => '\n\n格局决定终局。' + pickVariant(dfrqDNA.personaPhrases.macro, v) + '——这不是一句口号，是我们每一天在践行的方向。',
+            () => '\n\n从赛道到格局，从技术到生态，我们的目标始终如一——' + pickVariant(dfrqDNA.personaPhrases.macro, v + 1) + '。',
+        ];
+
+        const genericClosings = [
+            () => '\n\n我们做的每一个决策，最终落脚点都是：对行业有没有价值，对用户有没有意义。',
+            () => '\n\n格局决定终局。只有站在更高的维度看问题，才能做出真正有远见的决策。',
+            () => '\n\n趋势不可逆，方向不可错。行业变革的窗口期已经打开，只有看清大势，才能赢得未来。',
+        ];
+
+        let r = pickVariant(openings, v)() + '\n\n' + pickVariant(middles, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
     // ===== 技术理工派 =====
-    // 讲参数、聊技术、重品质，务实客观
-    function personaTech(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '我们来看几个核心指标：\n\n';
-        r += (s[0] || text).trim() + '。';
-        if (s.length > 1) {
-            r += '具体来说，' + s.slice(1, -1).join('，') + '。';
-        }
-        r += '\n\n这些数据背后，是研发团队长时间的工程积累和严苛测试。不是PPT上的参数，是真实场景下跑出来的结果。\n\n';
-        r += '品质的事，用数据说话，不说虚的。';
+    // 核心：数据罗列 + "用数据说话"
+    // 标签：讲参数、聊技术、重品质
+    function personaTech(text, isDfrq, v) {
+        const s = splitSentences(text);
+        const brandPrefix = isDfrq ? '东风日产' : '';
+
+        const openings = [
+            () => '我们来看几个核心指标：\n\n' + (s[0] || text).trim() + '。',
+            () => '关于这个问题，数据最有发言权：\n\n' + (s[0] || text).trim() + '。',
+            () => '先把关键参数摆出来：\n\n' + (s[0] || text).trim() + '。',
+        ];
+
+        const middleBlocks = [
+            () => (s.length > 1 ? '具体来说——' + s.slice(1, -1).join('，') + '。' : ''),
+            () => (s.length > 1 ? '再往下拆——' + s.slice(1).map(x => '✦ ' + x.trim()).join('\n') : ''),
+            () => (s.length > 1 ? '逐项展开：\n' + s.slice(1).map(x => '• ' + x.trim()).join('\n') : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n这些数据背后，是研发团队长时间的工程积累和严苛测试。不是PPT上的参数，是真实场景下跑出来的结果。\n\n品质的事，用数据说话，不说虚的。' + pickVariant(dfrqDNA.personaPhrases.tech, v),
+            () => '\n\n每一项参数都有出处，每一个指标都经得起验证。' + pickVariant(dfrqDNA.personaPhrases.tech, v) + '——这是我们交给用户的答卷。',
+            () => '\n\n' + pickVariant(dfrqDNA.personaPhrases.tech, v) + '。数据不会撒谎，品质经得起检验。',
+        ];
+
+        const genericClosings = [
+            () => '\n\n这些数据背后，是研发团队长时间的工程积累和严苛测试。不是PPT上的参数，是真实场景下跑出来的结果。\n\n品质的事，用数据说话，不说虚的。',
+            () => '\n\n每一项参数都有出处，每一个指标都经得起验证。用数据说话，这是我们对用户最基本的尊重。',
+            () => '\n\n参数可能枯燥，但安全从不妥协，品质从不打折。用数据说话，这是理工人的底线。',
+        ];
+
+        let r = pickVariant(openings, v)() + '\n' + pickVariant(middleBlocks, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
     // ===== 热血敢言型 =====
-    // 态度鲜明、自信张扬、风格犀利有记忆点
-    function personaBold(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '说实话，' + (s[0] || text).trim() + '——你们说，这算不算硬实力？\n\n';
-        if (s.length > 1) {
-            r += s.slice(1, -1).map(x => x.trim()).join('！') + '！\n\n';
-        }
+    // 核心：暴论开场 + 对账式反问
+    // 标签：态度鲜明、自信张扬、风格犀利有记忆点
+    function personaBold(text, isDfrq, v) {
+        const s = splitSentences(text);
+
+        const openings = [
+            () => '说实话，' + (s[0] || text).trim() + '——你们说，这算不算硬实力？',
+            () => '负责任地说，' + (s[0] || text).trim() + '。这不是吹，是事实！',
+            () => '今天说点实在的：' + (s[0] || text).trim() + '——你猜怎么着？就是这么回事！',
+        ];
+
+        const middleBlocks = [
+            () => (s.length > 1 ? s.slice(1, -1).map(x => x.trim()).join('！') + '！' : ''),
+            () => (s.length > 1 ? '有人可能觉得这没什么——但你看看行业平均水平呢？' + s.slice(1).join('！') + '！' : ''),
+            () => (s.length > 1 ? '还不够？那继续看——' + s.slice(1).map(x => x.trim()).join('，') + '！' : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n不能说相似，只能说我们全力以赴。' + pickVariant(dfrqDNA.personaPhrases.bold, v),
+            () => '\n\n' + pickVariant(dfrqDNA.personaPhrases.bold, v) + '。你们说，这怎么选？',
+            () => '\n\n实力摆在这里，' + pickVariant(dfrqDNA.personaPhrases.bold, v + 1) + '。不服来试！',
+        ];
+
+        const genericClosings = [
+            () => '\n\n有人可能不服，但事实就是事实。你们说，这怎么选？',
+            () => '\n\n态度很明确：好的就是好的，强的不怕比较。你们说呢？',
+            () => '\n\n不需要多解释，实力会说话。该来的总会来，该赢的不会输。',
+        ];
+
         const last = s[s.length - 1] || '';
-        r += '不能说相似，只能说我们全力以赴。' + (last ? last.trim() + '——' : '') + '你们说，这怎么选？';
+        let r = pickVariant(openings, v)() + '\n\n' + pickVariant(middleBlocks, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
     // ===== 亲和温情派 =====
-    // 接地气、懂用户，情绪温和，有共情力
-    function personaWarm(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '其实很多用户跟我说，买一台车不只是买一个工具，是买一种安心感。\n\n';
-        r += (s[0] || text).trim() + '。';
-        if (s.length > 1) r += s.slice(1).join('，').trim() + '。';
-        r += '\n\n我们听到了这些心声。每一个细节的打磨，都是希望大家开着放心、用着顺心、家人坐着安心。\n\n';
-        r += '用户的信任，是我们最大的动力。谢谢你们。';
+    // 核心：共情引入 + 温暖感谢结尾
+    // 标签：接地气、懂用户，情绪温和，有共情力
+    function personaWarm(text, isDfrq, v) {
+        const s = splitSentences(text);
+
+        const openings = [
+            () => '其实很多用户跟我说，买一台车不只是买一个工具，是买一种安心感。\n\n' + (s[0] || text).trim() + '。',
+            () => '你有没有这样的时刻——看着家人安稳地坐在副驾，心里莫名地踏实？\n\n' + (s[0] || text).trim() + '。',
+            () => '说实话，做产品这么多年，我们最怕辜负的就是用户的信任。\n\n' + (s[0] || text).trim() + '。',
+        ];
+
+        const middles = [
+            () => (s.length > 1 ? s.slice(1).join('，').trim() + '。' : ''),
+            () => (s.length > 1 ? '我们听到了这些心声——' + s.slice(1).join('，').trim() + '。' : ''),
+            () => (s.length > 1 ? '大家最在乎的，我们也最在乎：' + s.slice(1).join('；').trim() + '。' : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n每一个细节的打磨，都是希望大家开着放心、用着顺心、家人坐着安心。\n\n用户的信任，是我们最大的动力。谢谢你们。' + pickVariant(dfrqDNA.personaPhrases.warm, v),
+            () => '\n\n' + pickVariant(dfrqDNA.personaPhrases.warm, v) + '。这份信任，我们永远不敢辜负。',
+            () => '\n\n我们不是在卖一台车，是在守护一种安心。' + pickVariant(dfrqDNA.personaPhrases.warm, v + 1) + '。谢谢每一位选择相信我们的人。',
+        ];
+
+        const genericClosings = [
+            () => '\n\n每一个细节的打磨，都是希望大家用着放心、家人安心。\n\n用户的信任，是我们最大的动力。谢谢你们。',
+            () => '\n\n用心做好产品，真心对待用户。这不是口号，是我们每天在做的事。谢谢每一位相信我们的人。',
+            () => '\n\n用户的每一次认可，都是我们前行的理由。感谢信任，绝不辜负。',
+        ];
+
+        let r = pickVariant(openings, v)() + '\n\n' + pickVariant(middles, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
     // ===== 幽默玩梗派 =====
-    // 会互动、懂玩梗，善用网络热词，轻松不严肃
-    function personaMeme(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '好家伙，今天来点硬货🎉\n\n';
-        r += (s[0] || text).trim() + '——这不是在开玩笑，是认真的！\n\n';
-        if (s.length > 1) r += s.slice(1).map(x => x.trim()).join('，') + '。\n\n';
-        r += '反正我是没见过这么能打的，你们自己感受一下吧～ [微笑]\n\n评论区告诉我，你们怎么看？';
+    // 核心：好家伙开场 + 评论区互动
+    // 标签：会互动、懂玩梗，善用网络热词，轻松不严肃
+    function personaMeme(text, isDfrq, v) {
+        const s = splitSentences(text);
+
+        const openings = [
+            () => '好家伙，今天来点硬货🎉\n\n' + (s[0] || text).trim() + '——这不是在开玩笑，是认真的！',
+            () => '哎呦喂，这波必须得说说😄\n\n' + (s[0] || text).trim() + '——你说绝不绝？',
+            () => '朋友们，今天这内容有点上头🔥\n\n' + (s[0] || text).trim() + '——我先跪了你们随意！',
+        ];
+
+        const middles = [
+            () => (s.length > 1 ? s.slice(1).map(x => x.trim()).join('，') + '。' : ''),
+            () => (s.length > 1 ? '再往下看——' + s.slice(1).map(x => x.trim()).join('！还有！') + '！' : ''),
+            () => (s.length > 1 ? '别眨眼——' + s.slice(1).join('，').trim() + '，就问你服不服？' : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n反正我是没见过这么能打的，你们自己感受一下吧～ 😎\n\n' + pickVariant(dfrqDNA.personaPhrases.meme, v) + '\n\n评论区告诉我，你们怎么看？',
+            () => '\n\n' + pickVariant(dfrqDNA.personaPhrases.meme, v) + ' ——不说了，我先去评论区蹲着了～\n\n弹幕刷起来，你们怎么看？',
+            () => '\n\n种草了吗？反正我先种为敬🌱 ' + pickVariant(dfrqDNA.personaPhrases.meme, v + 1) + '\n\n评论区见，我赌你们会"真香"！',
+        ];
+
+        const genericClosings = [
+            () => '\n\n反正我是没见过这么能打的，你们自己感受一下吧～\n\n评论区告诉我，你们怎么看？',
+            () => '\n\n不说了，这波我反正是上头了～你们来评评理！评论区见！',
+            () => '\n\n就冲这表现，我反手就是一个种草🌱\n\n弹幕刷起来，你们觉得呢？',
+        ];
+
+        let r = pickVariant(openings, v)() + '\n\n' + pickVariant(middles, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
     // ===== 传统稳重派 =====
-    // 谦和有礼，不激进，用词温润得体
-    function personaSteady(text) {
-        const s = text.split(/[。！？]/).filter(x => x.trim());
-        let r = '';
-        r += '非常感谢各位的关注与信任。\n\n';
-        r += (s[0] || text).trim() + '。';
-        if (s.length > 1) r += s.slice(1).join('，').trim() + '。';
-        r += '\n\n多年来，我们始终秉持"稳健经营、专注品质"的原则，一步一个脚印走到今天。未来，我们将继续用诚意回报每一位关注和支持我们的朋友。\n\n';
-        r += '感谢大家一路相伴，不负期待。';
+    // 核心：礼貌感谢 + 稳健承诺收尾
+    // 标签：谦和有礼，不激进，用词温润得体
+    function personaSteady(text, isDfrq, v) {
+        const s = splitSentences(text);
+
+        const openings = [
+            () => '非常感谢各位的关注与信任。\n\n' + (s[0] || text).trim() + '。',
+            () => '衷心感谢大家一直以来的支持与厚爱。\n\n' + (s[0] || text).trim() + '。',
+            () => '尊敬的各位来宾，感谢各位莅临。\n\n' + (s[0] || text).trim() + '。',
+        ];
+
+        const middles = [
+            () => (s.length > 1 ? s.slice(1).join('，').trim() + '。' : ''),
+            () => (s.length > 1 ? '在此基础上——' + s.slice(1).join('；').trim() + '。' : ''),
+            () => (s.length > 1 ? s.slice(1).map(x => '一方面，' + x.trim()).join('。') + '。' : ''),
+        ];
+
+        const dfrqClosings = [
+            () => '\n\n多年来，我们始终秉持"稳健经营、专注品质"的原则，一步一个脚印走到今天。未来，我们将继续用诚意回报每一位关注和支持我们的朋友。\n\n' + pickVariant(dfrqDNA.personaPhrases.steady, v) + '。谢谢大家！',
+            () => '\n\n' + pickVariant(dfrqDNA.personaPhrases.steady, v) + '。这是我们的承诺，也是我们的行动。\n\n感谢大家一路相伴，不负期待。',
+            () => '\n\n稳健不是保守，是对品质的敬畏；承诺不是口号，是每一天的践行。\n\n' + pickVariant(dfrqDNA.personaPhrases.steady, v + 1) + '。谢谢大家！',
+        ];
+
+        const genericClosings = [
+            () => '\n\n多年来，我们始终秉持稳健务实的原则，一步一个脚印走到今天。未来，我们将继续用诚意回报每一位关注和支持我们的朋友。\n\n感谢大家一路相伴，不负期待。',
+            () => '\n\n稳健不是保守，是对品质的敬畏。承诺不是口号，是每一天的践行。\n\n感谢各位的信赖与支持。',
+            () => '\n\n我们会继续踏踏实实做好每一件事，用行动证明选择我们不会错。\n\n感谢大家，我们稳步前行。',
+        ];
+
+        let r = pickVariant(openings, v)() + '\n\n' + pickVariant(middles, v)() + (isDfrq ? pickVariant(dfrqClosings, v)() : pickVariant(genericClosings, v)());
         return r;
     }
 
-    // ===== 示例文本（按人设） =====
+    // ====================================================================
+    //  第四步：校对润色（错别字 / 语病 / 衔接）
+    // ====================================================================
+    function polishText(text) {
+        let r = text;
+
+        // ---- 错别字修正 ----
+        const typoFixes = [
+            [/做的好/g, '做得好'],
+            [/的的/g, '的'],
+            [/了了/g, '了'],
+            [/我们我们/g, '我们'],
+            [/产品产品/g, '产品'],
+            [/非常非常/g, '非常'],
+            [/已经已经/g, '已经'],
+            [/继续继续/g, '继续'],
+            [/不断不断/g, '不断'],
+            [/提升提升/g, '提升'],
+            [/优化优化/g, '优化'],
+            [/极致极致/g, '极致'],
+            [/卓越卓越/g, '卓越'],
+            [/领先领先/g, '领先'],
+            [/(?<=[，。！？])\s{2,}/g, ' '],     // 多余空格
+            [/^\s+|\s+$/gm, ''],                   // 行首行尾空格
+        ];
+        for (const [pat, rep] of typoFixes) r = r.replace(pat, rep);
+
+        // ---- 的/地/得 纠正 ----
+        r = r.replace(/认真的?说/g, '认真地说');
+        r = r.replace(/快的?跑/g, '快地跑');
+
+        // ---- 标点规范 ----
+        r = r.replace(/\.{3,}/g, '……');           // 连续点号 → 省略号
+        r = r.replace(/。。+/g, '。');               // 句号叠用
+        r = r.replace(/！！+/g, '！');               // 感叹号叠用
+        r = r.replace(/，，+/g, '，');               // 逗号叠用
+        r = r.replace(/,,+/g, '，');                 // 英文逗号叠用
+        r = r.replace(/,,/g, '，');                  // 英文逗号 → 中文
+
+        // ---- 衔接过渡优化 ----
+        // 连续短句合并
+        r = r.replace(/(\S{2,5})。(\S{2,5})。(\S{2,5})。/g, (m, a, b, c) => {
+            if (a.length + b.length + c.length < 15) return a + '，' + b + '，' + c + '。';
+            return m;
+        });
+        // "我们"连续出现时添加衔接词
+        r = r.replace(/我们([^，。！？]+)我们/g, '我们$1，同时我们');
+        // 去掉"我们。我们"的割裂感
+        r = r.replace(/我们。(\s*)我们/g, '我们。$1与此同时，我们');
+
+        // ---- 最终清理 ----
+        r = r.replace(/\n{3,}/g, '\n\n').trim();
+
+        return r;
+    }
+
+    // ====================================================================
+    //  示例文本（按人设）
+    // ====================================================================
     const examples = {
         macro:  '我们的新能源产品在行业内有很强的竞争力，我们希望为消费者提供更好的价值，推动行业技术进步。',
         tech:   '我们的产品续航里程很长，智能座舱体验很好，品质可靠，技术领先，价格也很合理。',
         bold:   '我们的产品非常优秀，续航里程很长，欢迎大家购买，感谢大家的关注。',
         warm:   '我们的服务非常周到，团队很优秀，大家要努力提升销量，服务好每一位客户。',
         meme:   '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。',
-        steady: '我们非常感谢大家的关注，我们的产品质量可靠，服务优质，希望大家多多支持。'
+        steady: '我们非常感谢大家的关注，我们的产品质量可靠，服务优质，希望大家多多支持。',
     };
 
     // ===== 页面初始化 =====
     initBrandDropdown();
-    currentBrand = 'dfrq';
-    currentBrandName = '东风日产';
 
     inputText.addEventListener('dblclick', () => {
         if (!inputText.value.trim()) {
