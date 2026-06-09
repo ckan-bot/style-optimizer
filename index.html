@@ -122,7 +122,7 @@
             padding: 32px 40px 60px;
         }
 
-        /* ===== 场景选择 ===== */
+        /* ===== 人设选择 ===== */
         .scene-section {
             margin-bottom: 28px;
         }
@@ -136,12 +136,15 @@
         }
         .scene-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
+        }
+        @media (max-width: 640px) {
+            .scene-grid { grid-template-columns: repeat(2, 1fr); }
         }
         .scene-card {
             position: relative;
-            padding: 16px 18px;
+            padding: 14px 16px 12px;
             background: var(--card);
             border: 2px solid var(--border);
             border-radius: var(--radius-sm);
@@ -172,19 +175,32 @@
             font-weight: 700;
         }
         .scene-card .scene-emoji {
-            font-size: 24px;
-            margin-bottom: 6px;
+            font-size: 22px;
+            margin-bottom: 5px;
         }
         .scene-card .scene-name {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--text);
+            margin-bottom: 4px;
         }
-        .scene-card .scene-desc {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 3px;
-            line-height: 1.4;
+        .scene-card .scene-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 5px;
+        }
+        .scene-card .scene-tag {
+            display: inline-block;
+            padding: 2px 7px;
+            background: rgba(37,99,235,0.07);
+            color: var(--select);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .scene-card.active .scene-tag {
+            background: rgba(37,99,235,0.14);
         }
         .brand-chip {
             padding: 8px 20px;
@@ -543,29 +559,63 @@
             </div>
         </div>
 
-        <!-- 场景选择 -->
+        <!-- 人设选择 -->
         <div class="scene-section">
-            <div class="scene-label">选择场景</div>
+            <div class="scene-label">选择人设</div>
             <div class="scene-grid" id="sceneGrid">
-                <div class="scene-card active" data-scene="launch">
-                    <div class="scene-emoji">🚗</div>
-                    <div class="scene-name">发布会</div>
-                    <div class="scene-desc">金句暴论 + 数据砸脸</div>
+                <div class="scene-card active" data-scene="macro">
+                    <div class="scene-emoji">🌐</div>
+                    <div class="scene-name">格局领航型</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">站位高</span>
+                        <span class="scene-tag">谈行业</span>
+                        <span class="scene-tag">讲趋势</span>
+                    </div>
                 </div>
-                <div class="scene-card" data-scene="media">
-                    <div class="scene-emoji">🎤</div>
-                    <div class="scene-name">媒体沟通采访</div>
-                    <div class="scene-desc">脱口秀式 + 自嘲幽默</div>
+                <div class="scene-card" data-scene="tech">
+                    <div class="scene-emoji">🔧</div>
+                    <div class="scene-name">技术理工派</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">讲参数</span>
+                        <span class="scene-tag">聊技术</span>
+                        <span class="scene-tag">重品质</span>
+                    </div>
                 </div>
-                <div class="scene-card" data-scene="mobilize">
+                <div class="scene-card" data-scene="bold">
                     <div class="scene-emoji">🔥</div>
-                    <div class="scene-name">内宣动员</div>
-                    <div class="scene-desc">战斗鼓动 + 三连排比</div>
+                    <div class="scene-name">热血敢言型</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">态度鲜明</span>
+                        <span class="scene-tag">自信张扬</span>
+                        <span class="scene-tag">有记忆点</span>
+                    </div>
                 </div>
-                <div class="scene-card" data-scene="social">
-                    <div class="scene-emoji">📱</div>
-                    <div class="scene-name">新媒体文案</div>
-                    <div class="scene-desc">短平快 + 互动反问</div>
+                <div class="scene-card" data-scene="warm">
+                    <div class="scene-emoji">🤝</div>
+                    <div class="scene-name">亲和温情派</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">接地气</span>
+                        <span class="scene-tag">懂用户</span>
+                        <span class="scene-tag">有共情力</span>
+                    </div>
+                </div>
+                <div class="scene-card" data-scene="meme">
+                    <div class="scene-emoji">😄</div>
+                    <div class="scene-name">幽默玩梗派</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">会互动</span>
+                        <span class="scene-tag">懂玩梗</span>
+                        <span class="scene-tag">轻松不严肃</span>
+                    </div>
+                </div>
+                <div class="scene-card" data-scene="steady">
+                    <div class="scene-emoji">🎩</div>
+                    <div class="scene-name">传统稳重派</div>
+                    <div class="scene-tags">
+                        <span class="scene-tag">谦和有礼</span>
+                        <span class="scene-tag">不激进</span>
+                        <span class="scene-tag">温润得体</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -625,7 +675,7 @@
     // ===== 全局状态 =====
     let currentBrand = '';
     let currentBrandName = '';
-    let currentScene = 'launch';
+    let currentScene = 'macro';   // 人设 key
     let isOptimizing = false;
     let resultText = '';
 
@@ -820,22 +870,13 @@
 
     // ===== 结果高亮 =====
     function highlightResult(text) {
-        // 高亮骞总标志性口头禅
-        const phrases = [
-            '说实话', '负责任地说', '你们说', '咱就是说',
-            '不能说[^，]+，只能说', '在中国为中国向全球',
-            '最后真正赢的', '咱们的消费者'
-        ];
         let html = escapeHtml(text);
-
         // 高亮数据（数字+单位）
         html = html.replace(/(\d+[\.\d]*)([%万台亿公里月年个辆元]+)/g,
             '<span class="hl-data">$1$2</span>');
-
-        // 高亮核心口头禅
-        html = html.replace(/(说实话|负责任地说|你们说|咱就是说|在中国为中国向全球|咱们的消费者)/g,
+        // 高亮各人设标志性口头禅
+        html = html.replace(/(说实话|负责任地说|你们说|咱就是说|在中国为中国向全球|咱们的消费者|从行业发展来看|用数据说话|感谢大家|不负期待|好家伙)/g,
             '<span class="hl-phrase">$1</span>');
-
         return html;
     }
 
@@ -845,174 +886,134 @@
         return d.innerHTML;
     }
 
-    // ===== 核心风格转换引擎（品牌感知）=====
-    function convertToBrandStyle(text, brand, scene) {
-        // 第一步：基础书面语 → 口语化替换
+    // ===== 核心风格转换引擎（品牌 × 人设）=====
+    function convertToBrandStyle(text, brand, persona) {
         let r = text;
 
+        // 第一步：通用书面语 → 口语化预处理
         const replacements = [
-            [/(?:我们|我司|本公司)(?:非常|十分|特别)?(?:认同|认可|赞同)/g, '说实话'],
-            [/(?:请|希望|恳请)(?:大家|各位|您)(?:判断|评价|考量)/g, '你们说'],
-            [/(?:不仅|不单)[^，。]+而且[^，。]+(?:雷同|相似|一致|相同)/g, '不能说相似，只能说一模一样'],
+            [/(?:我们|我司|本公司)(?:非常|十分|特别)?(?:认同|认可|赞同)/g, '我们认为'],
+            [/(?:请|希望|恳请)(?:大家|各位|您)(?:判断|评价|考量)/g, '大家可以判断'],
             [/(?:我们|本公司)(?:受益匪浅|获益良多|深受其益)/g, '我们也是受益者'],
-            [/(?:欢迎|期待)(?:大家|各位)(?:交流|沟通|探讨)/g, '拉个群好好交流交流'],
-            [/(?:我(?:非常|十分)?(?:高兴|荣幸|开心)(?:地)?(?:宣布|告诉|分享))/g, '说实话'],
-            [/(?:我(?:们)?(?:认为|觉得|以为)(?:品质|质量)(?:非常|十分)?(?:重要|关键|核心))/g, '三电终身质保，敢写进合同才算数'],
-            [/(?:感谢(?:大家|各位|您)(?:的)?(?:关注|支持|关心))/g, '今天关注到相关情况，收到很多朋友问询'],
-            [/(?:与竞品相比(?:各有|均具)(?:优势|亮点))/g, '1.5T对1.5L，高速上踩一脚就知道'],
-            [/(?:我们(?:希望|致力于|专注于)(?:为消费者|给用户)(?:创造|提供)(?:价值|更好))/g, '在中国为中国向全球，最后真正赢的，永远是咱们的消费者'],
-            [/(?:请(?:各位|大家)(?:媒体|老师)(?:多)?(?:支持|关注|指教))/g, '你们说，这要是A股该多好啊'],
-            [/(?:产品(?:非常|十分)?(?:优秀|出色|卓越))/g, '全网搜，只此一台'],
-            [/(?:续航(?:里程)?(?:很长|很远|出色))/g, '续航直接拉满，310公里纯电——你们算算，够不够来回'],
-            [/(?:智能(?:座舱|化)?(?:体验|表现)(?:很好|出色|优秀))/g, '智能化领先一个代际'],
-            [/(?:(?:欢?迎|期待)(?:大家|各位)?(?:购买|选购|体验))/g, '你们说，这怎么选？'],
-            [/(?:(?:价格|售价)(?:合理|实惠|优惠|亲民))/g, '价格？16.99万，你们算算这笔账'],
-            [/(?:性能(?:表现)?(?:出色|优秀|强劲))/g, '动力更强、跑得更远，高速上踩一脚就知道'],
-            [/(?:(?:品质|质量)(?:可靠|过硬|有保障))/g, '真技术、真品质、真诚意，才是硬通货'],
-            [/(?:技术(?:领先|先进|创新))/g, '领先一个代际，也领先友商12-18个月'],
-            [/(?:团队(?:优秀|强大|出色|有能力))/g, '敢拼敢冲、不服输的团队'],
-            [/(?:销量(?:很好|增长|提升|突破))/g, '订单直接飙上来了'],
-            [/(?:市场(?:表现|份额)(?:良好|领先|优秀))/g, '市场不等人，订单说明一切'],
-            [/(?:(?:诚邀|邀请|欢迎)(?:莅临|参加|参与)(?:体验|试驾))/g, '别光听我说，开一圈就知道'],
-            [/(?:服务(?:周到|贴心|完善|优质))/g, '用服务赢订单，用实干赢信任'],
-            [/(?:我们(?:将)?(?:继续|持续)(?:努力|奋进|前行))/g, '不玩虚的，不负用户'],
+            [/(?:欢迎|期待)(?:大家|各位)(?:交流|沟通|探讨)/g, '欢迎大家交流'],
+            [/(?:感谢(?:大家|各位|您)(?:的)?(?:关注|支持|关心))/g, '感谢大家的关注'],
+            [/(?:产品(?:非常|十分)?(?:优秀|出色|卓越))/g, '产品很有竞争力'],
+            [/(?:续航(?:里程)?(?:很长|很远|出色))/g, '续航表现优秀'],
+            [/(?:智能(?:座舱|化)?(?:体验|表现)(?:很好|出色|优秀))/g, '智能化体验领先'],
+            [/(?:(?:欢?迎|期待)(?:大家|各位)?(?:购买|选购|体验))/g, '欢迎大家体验'],
+            [/(?:性能(?:表现)?(?:出色|优秀|强劲))/g, '性能表现强劲'],
+            [/(?:(?:品质|质量)(?:可靠|过硬|有保障))/g, '品质有保障'],
+            [/(?:技术(?:领先|先进|创新))/g, '技术领先'],
+            [/(?:销量(?:很好|增长|提升|突破))/g, '销量持续提升'],
+            [/(?:服务(?:周到|贴心|完善|优质))/g, '服务完善'],
+            [/(?:我们(?:将)?(?:继续|持续)(?:努力|奋进|前行))/g, '我们会持续努力'],
         ];
+        for (const [p, rep] of replacements) r = r.replace(p, rep);
 
-        for (const [pattern, replacement] of replacements) {
-            r = r.replace(pattern, replacement);
+        // 第二步：按人设做深度风格塑造
+        switch (persona) {
+            case 'macro':   r = personaMacro(r); break;
+            case 'tech':    r = personaTech(r); break;
+            case 'bold':    r = personaBold(r); break;
+            case 'warm':    r = personaWarm(r); break;
+            case 'meme':    r = personaMeme(r); break;
+            case 'steady':  r = personaSteady(r); break;
         }
 
-        // 第二步：按品牌微调口头禅
-        r = applyBrandTone(r, brand);
-
-        // 第三步：按场景做结构调整
-        switch (scene) {
-            case 'launch':
-                r = structureLaunch(r, brand);
-                break;
-            case 'media':
-                r = structureMedia(r, brand);
-                break;
-            case 'mobilize':
-                r = structureMobilize(r);
-                break;
-            case 'social':
-                r = structureSocial(r);
-                break;
-        }
-
-        // 第四步：收尾润色
-        r = finalPolish(r, scene);
-
-        return r;
-    }
-
-    // ===== 品牌语气微调 =====
-    function applyBrandTone(text, brand) {
-        // 解析品牌名（支持 "other:品牌名" 格式）
-        let brandDisplayName = '';
-        if (brand && brand.startsWith('other:')) {
-            brandDisplayName = brand.replace('other:', '');
-        } else {
-            const brandNames = {
-                dfrq: '东风日产',
-                dfms: '东风猛士',
-                yipai: '奕派',
-                dongfeng: '东风集团',
-                lantuo: '岚图',
-                changan: '长安启源',
-                gqhaobo: '广汽昊铂',
-                '': ''
-            };
-            brandDisplayName = brandNames[brand] || '';
-        }
-        // 在结尾适当位置自然带入品牌名（避免过度）
-        return text;
-    }
-
-    // ===== 发布会场景 =====
-    function structureLaunch(text, brand) {
-        const sentences = text.split(/[。！？]/).filter(s => s.trim());
-        if (sentences.length <= 1) {
-            return '负责任地说，' + text.replace(/。$/, '') + '——你们说，这怎么选？';
-        }
-        let result = '';
-        result += sentences[0].trim() + '——你们说，这算不算硬实力？\n\n';
-        for (let i = 1; i < sentences.length - 1; i++) {
-            result += sentences[i].trim() + '。';
-        }
-        if (sentences.length > 1) {
-            const last = sentences[sentences.length - 1].trim();
-            result += '\n\n' + last + '——你们说，这怎么选？';
-        }
-        return result;
-    }
-
-    // ===== 媒体沟通采访场景 =====
-    function structureMedia(text, brand) {
-        let result = '说实话，全员牛马，谁也别笑话谁。\n\n';
-        result += text + '\n\n';
-        result += '咱就是说，主打一个听劝、善改。比起一夜爆红，我们更想慢慢走、走得远。\n\n';
-        result += '好了，打住，再说下去就不礼貌了。';
-        return result;
-    }
-
-    // ===== 内宣动员场景 =====
-    function structureMobilize(text) {
-        const sentences = text.split(/[。！？]/).filter(s => s.trim());
-        let result = '正式开战！大家，准备好了没有？！\n\n';
-        result += '因为，' + (sentences[0] || '我们有真产品') + '！\n';
-        if (sentences.length > 1) {
-            result += '因为，' + (sentences[1] || '我们有真底气') + '！\n';
-        }
-        if (sentences.length > 2) {
-            result += '因为，' + (sentences[2] || '我们有敢拼的团队') + '！\n';
-        }
-        result += '\n';
-        result += '不摆架子、不喊口号，用实干赢信任，用服务赢订单！\n\n';
-        result += '现在！立刻！开干！';
-        return result;
-    }
-
-    // ===== 新媒体文案场景 =====
-    function structureSocial(text) {
-        let result = text.replace(/。$/, '') + '——你们说？\n\n[微笑]';
-        return result;
-    }
-
-    // ===== 收尾润色 =====
-    function finalPolish(text, scene) {
-        let r = text;
-
-        // 添加反问标点
-        r = r.replace(/——你们说[，？]?$/gm, '——你们说？');
-        r = r.replace(/——你们说，这怎么选[？]?$/gm, '——你们说，这怎么选？');
-
-        // 确保感叹号在动员场景充足
-        if (scene === 'mobilize') {
-            r = r.replace(/开干$/gm, '开干！');
-        }
-
-        // 新媒体文案场景加微笑
-        if (scene === 'social' && !r.includes('[微笑]')) {
-            r = r.trimEnd() + ' [微笑]';
-        }
-
-        // 清理多余空白
+        // 第三步：收尾清理
         r = r.replace(/\n{3,}/g, '\n\n').trim();
-
         return r;
     }
 
-    // ===== 示例文本 =====
+    // ===== 格局领航型 =====
+    // 站位高、谈行业、讲趋势，偏宏观叙事
+    function personaMacro(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '从行业发展来看，' + (s[0] || text).trim() + '。\n\n';
+        r += '这不只是一款产品的问题，是整个赛道进化方向的缩影。新能源、智能化、用户体验，三条线同步演进，谁能把握住趋势，谁就站在时代的前排。\n\n';
+        if (s.length > 1) r += s.slice(1).join('。').trim() + '。\n\n';
+        r += '我们做的每一个决策，最终落脚点都是：对行业有没有价值，对用户有没有意义。';
+        return r;
+    }
+
+    // ===== 技术理工派 =====
+    // 讲参数、聊技术、重品质，务实客观
+    function personaTech(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '我们来看几个核心指标：\n\n';
+        r += (s[0] || text).trim() + '。';
+        if (s.length > 1) {
+            r += '具体来说，' + s.slice(1, -1).join('，') + '。';
+        }
+        r += '\n\n这些数据背后，是研发团队长时间的工程积累和严苛测试。不是PPT上的参数，是真实场景下跑出来的结果。\n\n';
+        r += '品质的事，用数据说话，不说虚的。';
+        return r;
+    }
+
+    // ===== 热血敢言型 =====
+    // 态度鲜明、自信张扬、风格犀利有记忆点
+    function personaBold(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '说实话，' + (s[0] || text).trim() + '——你们说，这算不算硬实力？\n\n';
+        if (s.length > 1) {
+            r += s.slice(1, -1).map(x => x.trim()).join('！') + '！\n\n';
+        }
+        const last = s[s.length - 1] || '';
+        r += '不能说相似，只能说我们全力以赴。' + (last ? last.trim() + '——' : '') + '你们说，这怎么选？';
+        return r;
+    }
+
+    // ===== 亲和温情派 =====
+    // 接地气、懂用户，情绪温和，有共情力
+    function personaWarm(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '其实很多用户跟我说，买一台车不只是买一个工具，是买一种安心感。\n\n';
+        r += (s[0] || text).trim() + '。';
+        if (s.length > 1) r += s.slice(1).join('，').trim() + '。';
+        r += '\n\n我们听到了这些心声。每一个细节的打磨，都是希望大家开着放心、用着顺心、家人坐着安心。\n\n';
+        r += '用户的信任，是我们最大的动力。谢谢你们。';
+        return r;
+    }
+
+    // ===== 幽默玩梗派 =====
+    // 会互动、懂玩梗，善用网络热词，轻松不严肃
+    function personaMeme(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '好家伙，今天来点硬货🎉\n\n';
+        r += (s[0] || text).trim() + '——这不是在开玩笑，是认真的！\n\n';
+        if (s.length > 1) r += s.slice(1).map(x => x.trim()).join('，') + '。\n\n';
+        r += '反正我是没见过这么能打的，你们自己感受一下吧～ [微笑]\n\n评论区告诉我，你们怎么看？';
+        return r;
+    }
+
+    // ===== 传统稳重派 =====
+    // 谦和有礼，不激进，用词温润得体
+    function personaSteady(text) {
+        const s = text.split(/[。！？]/).filter(x => x.trim());
+        let r = '';
+        r += '非常感谢各位的关注与信任。\n\n';
+        r += (s[0] || text).trim() + '。';
+        if (s.length > 1) r += s.slice(1).join('，').trim() + '。';
+        r += '\n\n多年来，我们始终秉持"稳健经营、专注品质"的原则，一步一个脚印走到今天。未来，我们将继续用诚意回报每一位关注和支持我们的朋友。\n\n';
+        r += '感谢大家一路相伴，不负期待。';
+        return r;
+    }
+
+    // ===== 示例文本（按人设） =====
     const examples = {
-        launch: '我们的新能源SUV产品非常优秀，续航里程很长，智能座舱体验很好，价格也很合理，欢迎大家购买。',
-        media: '我们最近工作很忙，发布了很多新产品，希望大家继续支持我们，关注我们的品牌。',
-        mobilize: '我们的团队很优秀，产品很有竞争力，大家要努力提升销量，服务好客户。',
-        social: '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。'
+        macro:  '我们的新能源产品在行业内有很强的竞争力，我们希望为消费者提供更好的价值，推动行业技术进步。',
+        tech:   '我们的产品续航里程很长，智能座舱体验很好，品质可靠，技术领先，价格也很合理。',
+        bold:   '我们的产品非常优秀，续航里程很长，欢迎大家购买，感谢大家的关注。',
+        warm:   '我们的服务非常周到，团队很优秀，大家要努力提升销量，服务好每一位客户。',
+        meme:   '我们新产品的智能化体验很好，续航也很长，价格很实惠，大家快来看看。',
+        steady: '我们非常感谢大家的关注，我们的产品质量可靠，服务优质，希望大家多多支持。'
     };
 
-    // 双击输入框填入示例
     // ===== 页面初始化 =====
     initBrandDropdown();
     currentBrand = 'dfrq';
@@ -1020,7 +1021,7 @@
 
     inputText.addEventListener('dblclick', () => {
         if (!inputText.value.trim()) {
-            inputText.value = examples[currentScene] || examples.launch;
+            inputText.value = examples[currentScene] || examples.macro;
             charCount.textContent = inputText.value.length + ' 字';
             showToast('💡 已填入示例文本');
         }
