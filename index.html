@@ -987,7 +987,10 @@
         }
 
         // ---- 第四步：校对润色 ----
-        r = polishText(r);
+        r = polishText(r, persona);
+
+        // ---- 第五步：核心数据保护 ----
+        r = preserveCoreData(text, r);
 
         return r;
     }
@@ -1255,12 +1258,12 @@
     }
 
     // ====================================================================
-    //  第四步：校对润色（错别字 / 语病 / 衔接）
+    //  第四步：校对润色（错别字 / 语病 / 衔接 / 逻辑 / 口语化 / 数据保护）
     // ====================================================================
-    function polishText(text) {
+    function polishText(text, persona) {
         let r = text;
 
-        // ---- 错别字修正 ----
+        // ---- 1. 错别字修正 ----
         const typoFixes = [
             [/做的好/g, '做得好'],
             [/的的/g, '的'],
@@ -1276,38 +1279,137 @@
             [/极致极致/g, '极致'],
             [/卓越卓越/g, '卓越'],
             [/领先领先/g, '领先'],
-            [/(?<=[，。！？])\s{2,}/g, ' '],     // 多余空格
-            [/^\s+|\s+$/gm, ''],                   // 行首行尾空格
+            [/涉及到/g, '涉及'],
+            [/进行着/g, '在进行'],
+            [/(?<=[，。！？])\s{2,}/g, ' '],
+            [/^\s+|\s+$/gm, ''],
         ];
-        for (const [pat, rep] of typoFixes) r = r.replace(pat, rep);
+        for (const [pat, rep] of typoFixes) {
+            try { r = r.replace(pat, rep); } catch(e) {}
+        }
 
-        // ---- 的/地/得 纠正 ----
-        r = r.replace(/认真的?说/g, '认真地说');
-        r = r.replace(/快的?跑/g, '快地跑');
+        // ---- 2. 的/地/得 纠正 ----
+        const deFixes = [
+            [/认真的?说/g, '认真地说'],
+            [/快的?跑/g, '快地跑'],
+            [/努力的?工作/g, '努力地工作'],
+            [/悄悄的?说/g, '悄悄地说'],
+            [/大声的?宣布/g, '大声地宣布'],
+        ];
+        for (const [pat, rep] of deFixes) {
+            try { r = r.replace(pat, rep); } catch(e) {}
+        }
 
-        // ---- 标点规范 ----
-        r = r.replace(/\.{3,}/g, '……');           // 连续点号 → 省略号
-        r = r.replace(/。。+/g, '。');               // 句号叠用
-        r = r.replace(/！！+/g, '！');               // 感叹号叠用
-        r = r.replace(/，，+/g, '，');               // 逗号叠用
-        r = r.replace(/,,+/g, '，');                 // 英文逗号叠用
-        r = r.replace(/,,/g, '，');                  // 英文逗号 → 中文
+        // ---- 3. 标点规范 ----
+        r = r.replace(/\.{3,}/g, '……');
+        r = r.replace(/。。+/g, '。');
+        r = r.replace(/！！+/g, '！');
+        r = r.replace(/，，+/g, '，');
+        r = r.replace(/,,+/g, '，');
+        r = r.replace(/,,/g, '，');
+        // 英文逗号 → 中文逗号（中文上下文中）
+        r = r.replace(/([\u4e00-\u9fa5]),([\u4e00-\u9fa5])/g, '$1，$2');
 
-        // ---- 衔接过渡优化 ----
-        // 连续短句合并
-        r = r.replace(/(\S{2,5})。(\S{2,5})。(\S{2,5})。/g, (m, a, b, c) => {
-            if (a.length + b.length + c.length < 15) return a + '，' + b + '，' + c + '。';
+        // ---- 4. 长句拆分（适合口头表达）----
+        // 将超过32字的句子在逗号/分号/冒号处拆分，使节奏轻快
+        const lines = r.split('\n');
+        const newLines = [];
+        for (const line of lines) {
+            if (line.length <= 32) {
+                newLines.push(line);
+                continue;
+            }
+            const parts = line.split(/([，；：])/);
+            let cur = '';
+            for (const p of parts) {
+                cur += p;
+                if (cur.length >= 20 && /[，；：]/.test(p)) {
+                    newLines.push(cur.trim());
+                    cur = '';
+                }
+            }
+            if (cur.trim()) newLines.push(cur.trim());
+        }
+        r = newLines.join('\n');
+
+        // ---- 5. 语病修正 ----
+        // "把...被..." 句式混乱
+        r = r.replace(/把(.+?)被(.+?)了/g, '被$2把$1了');
+        // 冗余"进行了"
+        r = r.replace(/进行了(\S{1,4})的/g, '$1的');
+        // 主语缺失修补（简单启发式）
+        r = r.replace(/^([^，。！？]{2,8})，([^，。！？]{4,20}[。！？])/gm, (m, a, b) => {
+            const subjects = ['我们', '我', '他们', '大家', '用户', '团队'];
+            if (!subjects.some(s => a.startsWith(s) || b.startsWith(s))) {
+                return '我们' + a + '，' + b;
+            }
             return m;
         });
-        // "我们"连续出现时添加衔接词
-        r = r.replace(/我们([^，。！？]+)我们/g, '我们$1，同时我们');
-        // 去掉"我们。我们"的割裂感
-        r = r.replace(/我们。(\s*)我们/g, '我们。$1与此同时，我们');
 
-        // ---- 最终清理 ----
+        // ---- 6. 逻辑衔接优化 ----
+        const p = persona || 'macro';
+        const transitions = {
+            macro:  ['与此同时，', '从更广阔的视角看，', '值得关注的是，'],
+            tech:   ['进一步来看，', '数据还显示，', '更重要的是，'],
+            bold:   ['更重要的是，', '你们再看，', '说实话，'],
+            warm:   ['与此同时，', '我们也注意到，', '值得一提的是，'],
+            meme:   ['而且哦，', '你们看这个，', '还有更绝的——'],
+            steady: ['此外，', '与此同时，', '在此基础上，'],
+        };
+        const tList = transitions[p] || transitions.macro;
+        let tIdx = 0;
+        r = r.replace(/\n\n(?=[\S])/g, () => {
+            const t = tList[tIdx % tList.length];
+            tIdx++;
+            return '\n\n' + t;
+        });
+
+        // ---- 7. 去除冗余重复 ----
+        const allLines = r.split('\n').filter(x => x.trim());
+        const unique = [];
+        for (const line of allLines) {
+            const isDup = unique.some(u => {
+                if (u === line) return true;
+                const shorter = u.length < line.length ? u : line;
+                const longer = u.length < line.length ? line : u;
+                let common = 0;
+                for (const c of shorter) { if (longer.includes(c)) common++; }
+                return common > shorter.length * 0.5;
+            });
+            if (!isDup) unique.push(line);
+        }
+        r = unique.join('\n');
+
+        // ---- 8. 最终清理 ----
         r = r.replace(/\n{3,}/g, '\n\n').trim();
 
         return r;
+    }
+
+    // ====================================================================
+    //  核心数据保护（保留全部产品/销量/福利/服务/价格数据）
+    // ====================================================================
+    function preserveCoreData(inputText, outputText) {
+        // 提取输入中的所有数字+单位
+        const numPattern = /(\d+[\.\d]*\s*[%万台亿公里月年个辆元度牛VkWWhkg毫米]*)/g;
+        const inputNums = [];
+        let m;
+        const clone = inputText;
+        try {
+            const re = new RegExp(numPattern.source, 'g');
+            while ((m = re.exec(clone)) !== null) {
+                inputNums.push(m[1].trim());
+            }
+        } catch(e) {}
+        // 去重
+        const uniqueNums = [...new Set(inputNums)];
+        // 检查哪些在输出中缺失
+        const missing = uniqueNums.filter(n => !outputText.includes(n));
+        // 如果有缺失，附加在输出末尾（语言标记，方便人工核对）
+        if (missing.length > 0) {
+            outputText += '\n\n（⚠️ 以下核心数据未在输出中找到，请确认是否需要补充：' + missing.join('、') + '）';
+        }
+        return outputText;
     }
 
     // ====================================================================
