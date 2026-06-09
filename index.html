@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文稿风格优化器 · 高管风格</title>
+    <title>讲稿风格优化器 · 高管风格</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -529,7 +529,7 @@
             <div class="logo-group">
                 <div class="logo-icon">✍️</div>
                 <div class="logo-text">
-                    <h1>文稿风格优化器</h1>
+                    <h1>讲稿风格优化器</h1>
                     <p>一键对齐高管视角 &amp; 品牌风格</p>
                 </div>
             </div>
@@ -546,14 +546,8 @@
             <div class="scene-label">选择品牌</div>
             <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;" id="brandBar">
                 <div class="brand-chip active" data-brand="dfrq" onclick="selectBrand(this)">东风日产</div>
-                <div class="brand-chip" data-brand="dfms" onclick="selectBrand(this)">东风猛士</div>
-                <div class="brand-chip" data-brand="yipai" onclick="selectBrand(this)">奕派科技</div>
-                <div class="brand-chip" data-brand="dongfeng" onclick="selectBrand(this)">东风集团</div>
-                <div class="brand-chip" data-brand="lantuo" onclick="selectBrand(this)">岚图汽车</div>
-                <div class="brand-chip" data-brand="changan" onclick="selectBrand(this)">长安启源</div>
-                <div class="brand-chip" data-brand="gqhaobo" onclick="selectBrand(this)">广汽昊铂</div>
                 <div class="brand-dropdown-wrap">
-                    <div class="brand-chip has-dropdown" data-brand="other" id="brandOther" onclick="toggleBrandDropdown(event)">其他</div>
+                    <div class="brand-chip has-dropdown" data-brand="other" id="brandOther" onclick="toggleBrandDropdown(event)">其他品牌</div>
                     <div class="brand-dropdown" id="brandDropdown"></div>
                 </div>
             </div>
@@ -626,11 +620,11 @@
                 <div class="panel-header">
                     <div class="panel-title">
                         <span class="dot input-dot"></span>
-                        原始文稿
+                        原始讲稿
                     </div>
                     <span class="char-count" id="charCount">0 字</span>
                 </div>
-                <textarea id="inputText" placeholder="在这里粘贴需要优化的文稿……&#10;&#10;例如：我们的产品非常优秀，续航里程很长，智能座舱体验很好，欢迎大家购买。"></textarea>
+                <textarea id="inputText" placeholder="在这里粘贴需要优化的讲稿……&#10;&#10;例如：我们的产品非常优秀，续航里程很长，智能座舱体验很好，欢迎大家购买。"></textarea>
             </div>
 
             <!-- 操作按钮（在输入框和结果框之间） -->
@@ -655,7 +649,7 @@
                 <div class="output-area" id="outputArea">
                     <div class="output-placeholder">
                         <div class="ph-icon">🎯</div>
-                        <div class="ph-text">选择品牌和场景，输入文稿<br>点击上方按钮，一键对齐高管风格</div>
+                        <div class="ph-text">选择品牌和人设，输入讲稿<br>点击上方按钮，一键对齐高管风格</div>
                     </div>
                 </div>
                 <div class="loading-overlay" id="loadingOverlay">
@@ -812,7 +806,7 @@
         el.classList.add('active');
         currentBrand = el.dataset.brand;
         currentBrandName = el.textContent === '其他' ? '' : el.textContent;
-        document.getElementById('brandOther').textContent = '其他';
+        document.getElementById('brandOther').textContent = '其他品牌';
     }
 
     function closeAllDropdowns() {
@@ -865,7 +859,7 @@
     // ====================================================================
     async function handleOptimize() {
         const text = inputText.value.trim();
-        if (!text) { showToast('请先输入需要优化的文稿'); return; }
+        if (!text) { showToast('请先输入需要优化的讲稿'); return; }
         if (isOptimizing) return;
         isOptimizing = true;
 
