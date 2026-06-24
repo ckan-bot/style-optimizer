@@ -112,6 +112,22 @@
             font-size: 12px;
             font-weight: 500;
         }
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: rgba(37,99,235,0.08);
+            color: var(--select);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .brand-mark svg {
+            width: 14px;
+            height: 14px;
+        }
 
         /* ===== Main ===== */
         main {
@@ -512,6 +528,40 @@
             50% { opacity: 0; }
         }
 
+        /* ===== Footer ===== */
+        .page-footer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 32px 40px 36px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        .page-footer a {
+            color: var(--select);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .page-footer a:hover { text-decoration: underline; }
+        .footer-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--select);
+        }
+        .footer-brand svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .page-footer { padding: 24px 20px 28px; font-size: 12px; }
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             header, main { padding-left: 20px; padding-right: 20px; }
@@ -536,6 +586,14 @@
             <div class="badge">
                 <span>🔥</span>
                 <span>专为车企高管打造的内容智造引擎</span>
+            </div>
+            <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                </svg>
+                <span>鱼得水出品</span>
             </div>
         </div>
     </header>
@@ -1429,5 +1487,18 @@
         }
     });
     </script>
+
+    <footer class="page-footer">
+        <div class="footer-brand">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+            <span>鱼得水 YUDESHUI</span>
+        </div>
+        <div>讲稿风格优化器 · 由鱼得水智能内容团队提供技术支持</div>
+    </footer>
+
 </body>
 </html>
